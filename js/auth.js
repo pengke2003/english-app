@@ -194,6 +194,7 @@
       }
       var u = result[0];
       console.log('[Auth] 登录验证通过, uid:', u.uid);
+      try { document.title = '[登录中] ' + u.uname; } catch(e){}
       this.current = {
         id: u.uid, username: u.uname, role: u.urole,
         nickname: u.unickname, loginCount: u.ulogin_count
@@ -205,6 +206,7 @@
         console.warn('[Auth] localStorage保存失败(不影响登录):', e.message);
       }
       console.log('[Auth] 登录完成, 返回成功');
+      try { document.title = '初中英语辅导'; } catch(e){}
       return { ok: true, user: this.current, loginCount: u.ulogin_count };
     },
 

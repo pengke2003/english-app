@@ -1439,40 +1439,93 @@
   // 全局：记录上次保存数据的时间戳（节流）
   var lastSaveTime = 0;
 
-  /** 登录处理 */
+  /** 登录处理（重写：极简健壮版） */
   window.handleLogin = async function () {
-    var username = $('login-username').value.trim();
-    var password = $('login-password').value;
-    var errEl = $('login-error');
-    var btn = $('login-submit');
-    if (!username || !password) { errEl.textContent = '请输入用户名和密码'; return; }
-    errEl.textContent = '';
-    btn.textContent = '登录中...';
-    btn.disabled = true;
+    console.log('===== handleLogin 开始 =====');
+    var usernameEl = document.getElementById('login-username');
+    var passwordEl = document.getElementById('login-password');
+    var errEl = document.getElementById('login-error');
+    var btn = document.getElementById('login-submit');
+    if (!usernameEl || !passwordEl) { alert('错误：找不到输入框'); return; }
+    var username = usernameEl.value.trim();
+    var password = passwordEl.value;
+    console.log('[Login] 用户名:', username, '密码长度:', password.length);
+    if (!username || !password) {
+      if (errEl) errEl.textContent = '请输入用户名和密码';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    if (btn) { btn.textContent = '登录中...'; btn.disabled = true; }
+
+    // 超时兜底：15秒后如果还没结果，恢复按钮
+    var timeoutHit = false;
+    var timer = setTimeout(function () {
+      timeoutHit = true;
+      console.error('[Login] 超时！15秒无响应');
+      if (btn) { btn.textContent = '登 录'; btn.disabled = false; }
+      if (errEl) errEl.textContent = '登录超时，请检查网络后重试';
+    }, 15000);
+
     try {
+      console.log('[Login] 调用 Auth.login...');
       var r = await window.Auth.login(username, password);
-      if (!r.ok) {
-        errEl.textContent = r.error || '登录失败';
-        btn.textContent = '登 录';
-        btn.disabled = false;
+      console.log('[Login] Auth.login返回:', JSON.stringify(r));
+      if (timeoutHit) return;
+      clearTimeout(timer);
+      if (!r || !r.ok) {
+        if (errEl) errEl.textContent = (r && r.error) ? r.error : '登录失败';
+        if (btn) { btn.textContent = '登 录'; btn.disabled = false; }
         return;
       }
-      // 登录成功，立即进入主页（不阻塞在后续步骤上）
-      console.log('[handleLogin] 登录成功, 准备进入主页, loginCount:', r.loginCount);
-      enterApp(r.loginCount);
-      console.log('[handleLogin] enterApp已调用');
-      // 后续步骤（缓存密码、恢复数据）异步执行，失败不影响进入
+      // ===== 登录成功，直接操作DOM切换页面（绕过所有封装） =====
+      console.log('[Login] 登录成功! 开始切换页面...');
+      var lp = document.getElementById('login-page');
+      var hp = document.getElementById('home-page');
+      console.log('[Login] login-page:', !!lp, 'home-page:', !!hp);
+      if (lp) lp.style.display = 'none';           // 直接隐藏登录页
+      if (hp) { hp.classList.add('active'); hp.style.display = 'block'; }  // 直接显示首页
+      console.log('[Login] 页面切换DOM操作完成');
+
+      // 渲染用户栏
+      try {
+        var bar = document.getElementById('user-bar');
+        var u = window.Auth.current;
+        if (bar && u) {
+          bar.innerHTML = '<div class="user-info">' +
+            '<span class="user-avatar">' + (u.role === 'admin' ? '👨‍💼' : '👤') + '</span>' +
+            '<span class="user-name">' + (u.nickname || u.username) + '</span>' +
+            '<span class="user-login-count">第 ' + (r.loginCount || 1) + ' 次登录</span></div>' +
+            '<button class="logout-btn" onclick="handleLogout()">退出</button>';
+          console.log('[Login] 用户栏已渲染');
+        }
+      } catch (e) { console.warn('[Login] 用户栏渲染失败:', e.message); }
+
+      // 管理员入口
+      try {
+        if (window.Auth.isAdmin()) {
+          var items = document.querySelectorAll('.admin-only');
+          for (var i = 0; i < items.length; i++) items[i].classList.remove('hidden');
+        }
+      } catch (e) {}
+
+      state.currentPage = 'home';
+      console.log('[Login] 全部完成!');
+      // 滚动到顶部
+      window.scrollTo(0, 0);
+
+      // 异步恢复数据（不阻塞）
+      try { await restoreUserData(window.Auth.current.id); } catch (e) {}
       try {
         if (window.Auth.isAdmin()) window.Auth._cacheAdminPwd(await window.Auth_sha256(password));
-      } catch (e2) { console.warn('缓存密码失败:', e2.message); }
-      try {
-        await restoreUserData(window.Auth.current.id);
-      } catch (e3) { console.warn('恢复数据失败:', e3.message); }
+      } catch (e) {}
+
     } catch (e) {
-      console.error('[Login] 登录异常:', e.message, e.stack);
-      errEl.textContent = '登录失败：' + e.message;
-      btn.textContent = '登 录';
-      btn.disabled = false;
+      console.error('[Login] 异常:', e.message, e.stack);
+      clearTimeout(timer);
+      if (!timeoutHit) {
+        if (errEl) errEl.textContent = '登录失败：' + e.message;
+        if (btn) { btn.textContent = '登 录'; btn.disabled = false; }
+      }
     }
   };
 
