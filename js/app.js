@@ -1485,8 +1485,8 @@
       var lp = document.getElementById('login-page');
       var hp = document.getElementById('home-page');
       console.log('[Login] login-page:', !!lp, 'home-page:', !!hp);
-      if (lp) { lp.classList.remove('active'); lp.style.display = 'none'; }  // 隐藏登录页
-      if (hp) { hp.classList.add('active'); hp.style.display = ''; }          // 显示首页(用class控制)
+      if (lp) lp.classList.remove('active');   // 隐藏登录页(靠class控制)
+      if (hp) hp.classList.add('active');      // 显示首页
       console.log('[Login] 页面切换DOM操作完成');
 
       // 渲染用户栏
