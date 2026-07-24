@@ -432,13 +432,27 @@
     }
     var w = state.wc.queue[state.wc.current];
     $('wc-question').textContent = w.cn;
-    $('wc-meaning').textContent = (w.pos ? '[' + w.pos + '] ' : '') + (w.phonetic || '');
+    // 音标 + 词性（音标在前，词性在后）
+    $('wc-meaning').textContent = (w.phonetic || '') + (w.pos ? '  ' + w.pos : '');
     $('wc-input').value = '';
     $('wc-input').focus();
     var total = state.wc.queue.length;
     $('wc-progress-fill').style.width = (state.wc.current / total * 100) + '%';
     $('wc-progress-text').textContent = (state.wc.current + 1) + ' / ' + total +
       ' （第' + state.wc.round + '轮 · 已对' + state.wc.correctCount + '）';
+    // 新题自动播报3次单词读音
+    autoPlayChallengeWord(w);
+  }
+
+  /** 单词挑战：新题自动播报单词3次 */
+  function autoPlayChallengeWord(w) {
+    if (!window.Speak || !window.Speak.sequence) return;
+    window.Speak.sequence([
+      { text: w.en, type: 'word', repeat: 3, gap: 300 }
+    ], {
+      accent: 'US', gender: 'female',
+      wordRate: 0.9
+    });
   }
 
   window.checkWordAnswer = function () {

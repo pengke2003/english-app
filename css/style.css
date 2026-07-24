@@ -84,6 +84,7 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 .wcm-top { text-align: center; }
 .wcm-top .word-en { font-size: 40px; font-weight: 700; color: #2d3748; margin-bottom: 6px; word-break: break-word; }
 .wcm-top .word-phonetic { font-size: 16px; color: #718096; }
+.wcm-top .word-pos { display: inline-block; font-size: 13px; padding: 2px 10px; background: rgba(102,126,234,.15); color: #667eea; border-radius: 10px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
 .wcm-divider { height: 1px; background: linear-gradient(90deg, transparent, #cbd5e0, transparent); margin: 18px 0; }
 .wcm-mid { text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
 .wcm-mid .word-pos {
