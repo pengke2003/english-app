@@ -6,32 +6,14 @@
   'use strict';
 
   // ============ 数据合并 ============
-  // 根据中文释义推断词性
-  function inferPos(cn) {
-    if (!cn) return 'n.';
-    // 副词：以"地"结尾
-    if (/地$/.test(cn)) return 'adv.';
-    // 形容词：以"的"结尾
-    if (/的$/.test(cn)) return 'adj.';
-    // 数词：纯数字或"第x"
-    if (/^[0-9一二三四五六七八九十百千万亿]+$/.test(cn) || /^第/.test(cn)) return 'num.';
-    // 代词：常见代词
-    if (/^(我|你|他|她|它|我们|你们|他们|这|那|什么|谁|哪|几|多少|某|本|此)/.test(cn) && cn.length <= 4) return 'pron.';
-    // 介词/连词：常见虚词
-    if (/^(在|于|向|从|到|给|为|和|与|或|但|虽然|因为|如果|当|比)$/.test(cn)) return cn.length <= 2 ? 'prep.' : 'conj.';
-    // 动词：以"化/去/来/出/入/上/下"结尾或包含动作意味
-    if (/(化|去|来|出|入|住|死|活|动|跑|走|飞|说|看|听|吃|喝|写|读|打|买|卖|给|拿|带|放|坐|站|开|关|开始|结束)$/.test(cn)) return 'v.';
-    // 默认：名词
-    return 'n.';
-  }
-
-  // 把紧凑格式的 WORDS_EXTRA 合并到完整词库，自动补全字段（含词性推断）
+  // 把紧凑格式的 WORDS_EXTRA 合并到完整词库
+  // EXTRA格式: [en, cn, grade, pos?, phonetic?]（pos和phonetic来自ECDICT词典）
   var ALL_WORDS = WORDS_CORE.slice();
   WORDS_EXTRA.forEach(function (item) {
     ALL_WORDS.push({
       en: item[0],
-      phonetic: '/' + item[0] + '/',
-      pos: inferPos(item[1]),
+      phonetic: item[4] || ('/' + item[0] + '/'),
+      pos: item[3] || 'n.',
       cn: item[1],
       example: 'Learn the word: ' + item[0] + '.',
       grade: item[2]
