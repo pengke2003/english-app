@@ -1458,7 +1458,9 @@
         return;
       }
       // 登录成功，立即进入主页（不阻塞在后续步骤上）
+      console.log('[handleLogin] 登录成功, 准备进入主页, loginCount:', r.loginCount);
       enterApp(r.loginCount);
+      console.log('[handleLogin] enterApp已调用');
       // 后续步骤（缓存密码、恢复数据）异步执行，失败不影响进入
       try {
         if (window.Auth.isAdmin()) window.Auth._cacheAdminPwd(await window.Auth_sha256(password));
@@ -1486,18 +1488,29 @@
 
   /** 进入应用主页 */
   function enterApp(loginCount) {
-    $('login-page').classList.remove('active');
-    $('home-page').classList.add('active');
-    renderUserBar(loginCount);
-    // 管理员显示用户管理入口
-    if (window.Auth.isAdmin()) {
-      var adminEntries = document.querySelectorAll('.admin-only');
-      for (var i = 0; i < adminEntries.length; i++) adminEntries[i].classList.remove('hidden');
-    }
-    state.currentPage = 'home';
-    // 首次登录提示
-    if (loginCount === 1) {
-      setTimeout(function () { alert('🎉 欢迎首次使用！'); }, 300);
+    console.log('[enterApp] 开始, loginCount:', loginCount);
+    try {
+      var lp = $('login-page');
+      var hp = $('home-page');
+      console.log('[enterApp] login-page元素:', !!lp, 'home-page元素:', !!hp);
+      if (lp) lp.classList.remove('active');
+      if (hp) hp.classList.add('active');
+      console.log('[enterApp] 页面切换完成');
+      renderUserBar(loginCount);
+      console.log('[enterApp] 用户栏渲染完成');
+      // 管理员显示用户管理入口
+      if (window.Auth.isAdmin()) {
+        var adminEntries = document.querySelectorAll('.admin-only');
+        for (var i = 0; i < adminEntries.length; i++) adminEntries[i].classList.remove('hidden');
+      }
+      state.currentPage = 'home';
+      console.log('[enterApp] 完成');
+      // 首次登录提示
+      if (loginCount === 1) {
+        setTimeout(function () { alert('🎉 欢迎首次使用！'); }, 300);
+      }
+    } catch (e) {
+      console.error('[enterApp] 异常:', e.message, e.stack);
     }
   }
 

@@ -193,11 +193,18 @@
         return { ok: false, error: '用户名或密码错误' };
       }
       var u = result[0];
+      console.log('[Auth] 登录验证通过, uid:', u.uid);
       this.current = {
         id: u.uid, username: u.uname, role: u.urole,
         nickname: u.unickname, loginCount: u.ulogin_count
       };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(this.current));
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(this.current));
+        console.log('[Auth] 会话已保存');
+      } catch (e) {
+        console.warn('[Auth] localStorage保存失败(不影响登录):', e.message);
+      }
+      console.log('[Auth] 登录完成, 返回成功');
       return { ok: true, user: this.current, loginCount: u.ulogin_count };
     },
 
