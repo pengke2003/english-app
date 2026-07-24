@@ -45,11 +45,10 @@
           </div>
           <div class="login-field">
             <label>密码</label>
-            <input type="password" id="login-password" placeholder="请输入密码">
+            <input type="password" id="login-password" placeholder="请输入密码" onkeydown="if(event.key==='Enter')handleLogin()">
           </div>
           <div class="login-error" id="login-error"></div>
           <button class="login-btn" id="login-submit" onclick="handleLogin()">登 录</button>
-          <p class="login-hint">提示：管理员默认账户 admin / Pp3381024!</p>
         </div>
       </div>
     </div>

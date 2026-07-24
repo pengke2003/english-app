@@ -16,14 +16,102 @@
 
   // SHA256 哈希（与数据库存储方式一致）
   async function sha256(text) {
+    console.log('[Auth] 开始哈希, crypto.subtle可用:', !!(window.crypto && window.crypto.subtle));
     if (window.crypto && window.crypto.subtle) {
-      var buf = new TextEncoder().encode(text);
-      var hash = await window.crypto.subtle.digest('SHA-256', buf);
-      return Array.from(new Uint8Array(hash))
-        .map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+      try {
+        var buf = new TextEncoder().encode(text);
+        var hash = await window.crypto.subtle.digest('SHA-256', buf);
+        var hex = Array.from(new Uint8Array(hash))
+          .map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+        console.log('[Auth] 哈希结果:', hex.substring(0, 16) + '...');
+        return hex;
+      } catch (e) {
+        console.error('[Auth] crypto.subtle失败, 降级:', e.message);
+      }
     }
-    // 降级方案：用慢速JS实现（极少触发）
-    return simpleSha256(text);
+    // 降级：纯JS实现SHA256（兼容所有环境）
+    return sha256JS(text);
+  }
+
+  // 纯JS SHA256实现（降级方案，兼容无crypto.subtle的环境）
+  // 使用经过验证的实现，正确处理32位无符号运算
+  function sha256JS(ascii) {
+    function rightRotate(value, amount) {
+      return (value >>> amount) | (value << (32 - amount));
+    }
+
+    var mathPow = Math.pow;
+    var maxWord = mathPow(2, 32);
+    var lengthProperty = 'length';
+    var i, j;
+    var result = '';
+
+    var words = [];
+    var asciiBitLength = ascii[lengthProperty] * 8;
+
+    var hash = sha256JS.h = sha256JS.h || [];
+    var k = sha256JS.k = sha256JS.k || [];
+    var primeCounter = k[lengthProperty];
+
+    var isComposite = {};
+    for (var candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (i = 0; i < 313; i += candidate) {
+          isComposite[i] = candidate;
+        }
+        hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+        k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      }
+    }
+
+    ascii += '\x80';
+    while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+    for (i = 0; i < ascii[lengthProperty]; i++) {
+      j = ascii.charCodeAt(i);
+      if (j >> 8) return '';
+      words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+    words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+    words[words[lengthProperty]] = (asciiBitLength);
+
+    for (j = 0; j < words[lengthProperty];) {
+      var w = words.slice(j, j += 16);
+      var oldHash = hash;
+      hash = hash.slice(0, 8);
+
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2];
+        var a = hash[0], e = hash[4];
+        var temp1 = hash[7]
+          + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+          + ((e & hash[5]) ^ ((~e) & hash[6]))
+          + k[i]
+          + (w[i] = (i < 16) ? w[i] : (
+              w[i - 16]
+              + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+              + w[i - 7]
+              + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+            ) | 0
+          );
+        var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+          + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+
+        hash = [(temp1 + temp2) | 0].concat(hash);
+        hash[4] = (hash[4] + temp1) | 0;
+      }
+
+      for (i = 0; i < 8; i++) {
+        hash[i] = (hash[i] + oldHash[i]) | 0;
+      }
+    }
+
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) {
+        var b = (hash[i] >> (j * 8)) & 255;
+        result += ((b < 16) ? 0 : '') + b.toString(16);
+      }
+    }
+    return result;
   }
 
   // ===== 通用请求 =====
@@ -92,11 +180,16 @@
      * @returns {object} {ok, user, loginCount, error}
      */
     login: async function (username, password) {
+      console.log('[Auth] 开始登录, 用户:', username);
       var hashed = await sha256(password);
+      console.log('[Auth] 密码已哈希, 开始请求...');
       var result = await rpc('fn_login', {
         p_username: username, p_password: hashed
       });
-      if (!result || result[0] === null || (result[0] && result[0].uid === null)) {
+      console.log('[Auth] 登录响应:', JSON.stringify(result));
+      if (!result || !Array.isArray(result) || result.length === 0 ||
+          result[0] === null || (result[0] && result[0].uid === null)) {
+        console.log('[Auth] 登录失败: 用户名或密码错误');
         return { ok: false, error: '用户名或密码错误' };
       }
       var u = result[0];
