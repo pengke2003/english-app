@@ -1457,14 +1457,18 @@
         btn.disabled = false;
         return;
       }
-      // 缓存管理员密码（供 RPC 调用）
-      if (window.Auth.isAdmin()) window.Auth._cacheAdminPwd(await window.Auth_sha256(password));
-      // 加载用户数据并恢复
-      await restoreUserData(window.Auth.current.id);
-      // 显示首页 + 登录欢迎
+      // 登录成功，立即进入主页（不阻塞在后续步骤上）
       enterApp(r.loginCount);
+      // 后续步骤（缓存密码、恢复数据）异步执行，失败不影响进入
+      try {
+        if (window.Auth.isAdmin()) window.Auth._cacheAdminPwd(await window.Auth_sha256(password));
+      } catch (e2) { console.warn('缓存密码失败:', e2.message); }
+      try {
+        await restoreUserData(window.Auth.current.id);
+      } catch (e3) { console.warn('恢复数据失败:', e3.message); }
     } catch (e) {
-      errEl.textContent = '网络错误：' + e.message;
+      console.error('[Login] 登录异常:', e.message, e.stack);
+      errEl.textContent = '登录失败：' + e.message;
       btn.textContent = '登 录';
       btn.disabled = false;
     }

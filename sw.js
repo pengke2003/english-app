@@ -6,7 +6,7 @@
  *   3. fetch 阶段：缓存优先（离线时直接返回缓存），缓存未命中再请求网络
  * 版本号更新（CACHE_VERSION）可强制刷新缓存
  */
-var CACHE_VERSION = 'english-app-v1.0.0';
+var CACHE_VERSION = 'english-app-v1.1.0';
 var CACHE_NAME = CACHE_VERSION;
 
 // 需要预缓存的核心资源
