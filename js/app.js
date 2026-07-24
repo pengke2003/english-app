@@ -83,7 +83,10 @@
   // ============ 页面路由 ============
   window.showPage = function (name) {
     var pages = document.querySelectorAll('.page');
-    for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+    for (var i = 0; i < pages.length; i++) {
+      pages[i].classList.remove('active');
+      pages[i].style.display = '';  // 清除inline style，让CSS class接管显示控制
+    }
     var target = $(name + '-page') || $(name === 'home' ? 'home-page' : '');
     if (target) target.classList.add('active');
     state.currentPage = name;
@@ -1482,8 +1485,8 @@
       var lp = document.getElementById('login-page');
       var hp = document.getElementById('home-page');
       console.log('[Login] login-page:', !!lp, 'home-page:', !!hp);
-      if (lp) lp.style.display = 'none';           // 直接隐藏登录页
-      if (hp) { hp.classList.add('active'); hp.style.display = 'block'; }  // 直接显示首页
+      if (lp) { lp.classList.remove('active'); lp.style.display = 'none'; }  // 隐藏登录页
+      if (hp) { hp.classList.add('active'); hp.style.display = ''; }          // 显示首页(用class控制)
       console.log('[Login] 页面切换DOM操作完成');
 
       // 渲染用户栏
