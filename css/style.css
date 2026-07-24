@@ -1,0 +1,569 @@
+/* ============ 全局重置 ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; color: #333; line-height: 1.6;
+}
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+.hidden { display: none !important; }
+
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: #f5f6fa; position: relative; }
+
+/* ============ 页面切换 ============ */
+.page { display: none; min-height: 100vh; animation: fadeIn .3s ease; position: relative; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============ 首页 ============ */
+.main-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff; padding: 48px 24px 40px; text-align: center;
+}
+.main-header h1 { font-size: 26px; margin-bottom: 8px; }
+.main-header .subtitle { font-size: 13px; opacity: .9; }
+
+/* 页面内安装按钮 */
+.install-entry { padding: 16px 16px 0; }
+.install-app-btn {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+  border-radius: 16px; background: linear-gradient(135deg, #f0fff4, #c6f6d5);
+  border: 2px solid #48bb78; transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 14px rgba(72,187,120,.25);
+}
+.install-app-btn:active { transform: scale(.97); box-shadow: 0 2px 8px rgba(72,187,120,.2); }
+.install-icon { font-size: 30px; flex-shrink: 0; }
+.install-text { flex: 1; text-align: left; }
+.install-text strong { display: block; font-size: 15px; color: #22543d; font-weight: 700; }
+.install-text small { font-size: 11px; color: #48bb78; }
+.install-arrow { font-size: 24px; color: #48bb78; font-weight: 300; }
+
+.home-menu { padding: 20px 16px; display: grid; grid-template-columns: 1fr; gap: 14px; }
+.menu-item {
+  background: #fff; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 4px 14px rgba(102,126,234,.12); transition: transform .15s, box-shadow .15s;
+}
+.menu-item:active { transform: scale(.97); box-shadow: 0 2px 8px rgba(102,126,234,.18); }
+.menu-item .icon {
+  width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); flex-shrink: 0;
+}
+.menu-item h3 { font-size: 17px; color: #2d3748; margin-bottom: 4px; }
+.menu-item p { font-size: 12px; color: #718096; }
+
+/* ============ 通用页面头 ============ */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff; padding: 16px 16px 14px; position: relative; z-index: 20;
+}
+.page-header h2 { font-size: 18px; text-align: center; margin-bottom: 12px; }
+.back-btn {
+  position: absolute; left: 12px; top: 14px; width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,.25); color: #fff; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; z-index: 21;
+}
+.back-btn::before { content: "‹"; font-size: 28px; line-height: 0.5; margin-top: -2px; }
+.back-btn:active { background: rgba(255,255,255,.45); }
+
+.grade-tabs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.grade-tab {
+  padding: 6px 16px; border-radius: 16px; background: rgba(255,255,255,.18); color: #fff;
+  font-size: 13px; transition: all .2s;
+}
+.grade-tab.active { background: #fff; color: #667eea; font-weight: 600; }
+
+/* ============ 单词记忆卡片 ============ */
+.card-container { padding: 24px 16px; }
+/* 合并单词卡片：英文+音标+中文+词性+例句同面显示 */
+.word-card-merged {
+  position: relative; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 16px;
+  box-shadow: 0 10px 30px rgba(102,126,234,.2);
+  background: linear-gradient(180deg, #fff 0%, #f0f4ff 55%, #667eea 100%);
+  padding: 28px 24px;
+}
+.wcm-top { text-align: center; }
+.wcm-top .word-en { font-size: 40px; font-weight: 700; color: #2d3748; margin-bottom: 6px; word-break: break-word; }
+.wcm-top .word-phonetic { font-size: 16px; color: #718096; }
+.wcm-divider { height: 1px; background: linear-gradient(90deg, transparent, #cbd5e0, transparent); margin: 18px 0; }
+.wcm-mid { text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wcm-mid .word-pos {
+  font-size: 13px; padding: 3px 12px; background: rgba(102,126,234,.15); color: #667eea;
+  border-radius: 12px; font-weight: 600;
+}
+.wcm-mid .word-meaning { font-size: 26px; font-weight: 700; color: #2d3748; }
+.wcm-example { margin-top: 18px; padding: 14px 16px; background: rgba(255,255,255,.92); border-radius: 14px; }
+.wcm-example .example-label { font-size: 12px; color: #667eea; font-weight: 600; margin-bottom: 6px; }
+.wcm-example .word-example { font-size: 14px; color: #2d3748; font-style: italic; line-height: 1.6; }
+
+/* 自动播报指示器 */
+.auto-play-indicator {
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 14px;
+  opacity: 0; transition: opacity .3s; height: 22px;
+}
+.auto-play-indicator.playing { opacity: 1; }
+.play-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e0; transition: all .2s; }
+.play-dot.active { background: #667eea; transform: scale(1.3); }
+.play-text { font-size: 12px; color: #718096; margin-left: 4px; }
+
+/* 兼容旧字段（避免其他页面引用报错） */
+.word-en { font-size: 40px; font-weight: 700; color: #2d3748; }
+.word-phonetic { font-size: 16px; color: #718096; }
+.word-meaning { font-weight: 700; color: #2d3748; }
+.word-pos { font-weight: 600; }
+.word-example { font-size: 14px; line-height: 1.6; }
+
+.card-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nav-btn {
+  padding: 12px 18px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2); flex: 1; max-width: 130px;
+}
+.nav-btn:active { transform: scale(.96); }
+.progress-info { font-size: 13px; color: #718096; font-weight: 600; }
+
+/* ============ 语法记忆 ============ */
+.grammar-list { padding: 16px; }
+.grammar-card {
+  background: #fff; border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.grammar-title {
+  display: flex; align-items: center; gap: 10px; padding: 16px; cursor: pointer; font-size: 15px; font-weight: 600; color: #2d3748;
+}
+.grade-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: #fff; font-weight: 500; }
+.grade-tag.g7 { background: #48bb78; }
+.grade-tag.g8 { background: #ed8936; }
+.grade-tag.g9 { background: #e53e3e; }
+.g-name { flex: 1; }
+.grammar-title .arrow { color: #a0aec0; transition: transform .2s; }
+.grammar-title.expanded .arrow { transform: rotate(180deg); }
+.grammar-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; padding: 0 16px; }
+.grammar-body.open { max-height: 1000px; padding-bottom: 16px; }
+.g-summary { font-size: 13px; color: #4a5568; background: #f7fafc; padding: 10px 12px; border-radius: 8px; margin: 8px 0; border-left: 3px solid #667eea; }
+.grammar-body h4 { font-size: 13px; color: #667eea; margin: 12px 0 6px; }
+.g-points { list-style: none; padding-left: 0; }
+.g-points li { font-size: 13px; color: #4a5568; padding: 5px 0 5px 18px; position: relative; }
+.g-points li::before { content: "▸"; position: absolute; left: 0; color: #667eea; }
+.g-examples .ex-item { font-size: 13px; color: #2d3748; padding: 6px 10px; background: #ebf4ff; border-radius: 6px; margin-bottom: 5px; }
+
+/* ============ 挑战/考试 通用 ============ */
+.challenge-config, .exam-intro { padding: 20px 16px; }
+.config-section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+.config-section label { display: block; font-size: 14px; color: #4a5568; margin-bottom: 12px; font-weight: 600; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.config-btn {
+  flex: 1; min-width: 70px; padding: 10px 8px; border-radius: 10px; background: #edf2f7; color: #4a5568;
+  font-size: 13px; font-weight: 500; transition: all .2s;
+}
+.config-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; box-shadow: 0 3px 10px rgba(102,126,234,.4); }
+
+.start-btn {
+  width: 100%; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 8px;
+  box-shadow: 0 4px 14px rgba(102,126,234,.4);
+}
+.start-btn:active { transform: scale(.97); }
+.start-btn.small { width: auto; padding: 8px 16px; font-size: 13px; }
+
+/* ============ 挑战区 ============ */
+.challenge-area { padding: 16px; }
+.progress-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width .3s; width: 0; }
+.progress-text { font-size: 12px; color: #718096; margin-bottom: 16px; text-align: center; }
+
+.question-card {
+  background: #fff; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+.question-word { font-size: 28px; font-weight: 700; color: #2d3748; text-align: center; margin-bottom: 8px; }
+.question-meaning { font-size: 13px; color: #a0aec0; text-align: center; margin-bottom: 20px; }
+.instruction { font-size: 13px; color: #718096; text-align: center; margin-bottom: 12px; }
+.answer-input {
+  width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 18px;
+  text-align: center; letter-spacing: 1px; transition: border-color .2s;
+}
+.answer-input:focus { border-color: #667eea; }
+.btn-row { display: flex; gap: 12px; margin-top: 16px; }
+.action-btn {
+  flex: 1; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, #48bb78, #38a169);
+}
+.action-btn.skip { background: linear-gradient(135deg, #a0aec0, #718096); }
+.action-btn:active { transform: scale(.97); }
+
+.feedback { margin-top: 14px; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; text-align: center; }
+.feedback.ok { background: #c6f6d5; color: #22543d; }
+.feedback.no { background: #fed7d7; color: #742a2a; }
+
+/* ============ 语法挑战选项 ============ */
+.question-text { font-size: 17px; color: #2d3748; margin-bottom: 20px; line-height: 1.5; font-weight: 600; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option-btn {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px;
+  background: #f7fafc; text-align: left; font-size: 15px; color: #2d3748; transition: all .15s;
+  border: 2px solid transparent;
+}
+.option-btn:active { transform: scale(.98); }
+.option-btn .opt-letter {
+  width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #4a5568;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.option-btn.correct { background: #c6f6d5; border-color: #48bb78; }
+.option-btn.correct .opt-letter { background: #48bb78; color: #fff; }
+.option-btn.wrong { background: #fed7d7; border-color: #f56565; }
+.option-btn.wrong .opt-letter { background: #f56565; color: #fff; }
+.option-btn:disabled { cursor: default; }
+.explain-box { margin-top: 14px; padding: 12px 14px; background: #ebf8ff; border-radius: 10px; font-size: 13px; color: #2c5282; border-left: 3px solid #4299e1; }
+
+/* ============ 结果面板 ============ */
+.result-panel { padding: 24px 16px; }
+.result-success { background: #fff; border-radius: 20px; padding: 32px 24px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.big-emoji { font-size: 64px; margin-bottom: 12px; }
+.result-success h3 { font-size: 22px; color: #2d3748; margin-bottom: 12px; }
+.result-success p { font-size: 14px; color: #718096; margin-bottom: 8px; }
+.result-success strong { color: #667eea; }
+
+/* ============ 真题测试 ============ */
+.exam-intro h3 { font-size: 18px; color: #2d3748; margin-bottom: 14px; }
+.exam-intro ul { background: #fff; border-radius: 12px; padding: 16px 16px 16px 32px; margin-bottom: 20px; }
+.exam-intro li { font-size: 14px; color: #4a5568; margin-bottom: 8px; }
+.score-history { margin-top: 24px; }
+.score-history h4 { font-size: 15px; color: #4a5568; margin-bottom: 12px; }
+.no-record { font-size: 13px; color: #a0aec0; text-align: center; padding: 20px; }
+.score-table { width: 100%; background: #fff; border-radius: 10px; overflow: hidden; font-size: 12px; border-collapse: collapse; }
+.score-table th { background: #667eea; color: #fff; padding: 8px; text-align: center; }
+.score-table td { padding: 8px; text-align: center; border-bottom: 1px solid #edf2f7; color: #4a5568; }
+.score-table tr.excellent td { background: #c6f6d5; }
+.score-table tr.good td { background: #bee3f8; }
+.score-table tr.pass td { background: #feebc8; }
+.score-table tr.fail td { background: #fed7d7; }
+
+.exam-timer {
+  display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+  background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 5;
+}
+.exam-timer span { font-size: 16px; font-weight: 700; color: #e53e3e; }
+.exam-nav { display: flex; background: #fff; border-bottom: 1px solid #e2e8f0; }
+.exam-tab { flex: 1; padding: 12px; font-size: 13px; color: #718096; background: #fff; border-bottom: 3px solid transparent; font-weight: 600; }
+.exam-tab.active { color: #667eea; border-bottom-color: #667eea; }
+
+.questions-container { padding: 16px; }
+.section-title { font-size: 15px; color: #2d3748; margin-bottom: 16px; padding: 10px 12px; background: #ebf4ff; border-radius: 8px; border-left: 4px solid #667eea; }
+.exam-q { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.q-no { font-size: 15px; color: #2d3748; margin-bottom: 12px; font-weight: 600; line-height: 1.5; }
+.q-opts { display: flex; flex-direction: column; gap: 8px; }
+.exam-opt {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px;
+  background: #f7fafc; font-size: 14px; color: #4a5568; cursor: pointer; border: 2px solid transparent;
+}
+.exam-opt.selected { background: #ebf4ff; border-color: #667eea; color: #667eea; font-weight: 600; }
+.exam-opt input { accent-color: #667eea; }
+.exam-opt .opt-letter {
+  width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; color: #4a5568;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.exam-opt.selected .opt-letter { background: #667eea; color: #fff; }
+.exam-submit-area { padding: 16px 0; }
+
+/* ============ 成绩详情 ============ */
+.score-board { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 24px; color: #fff; margin-bottom: 20px; }
+.score-total { font-size: 56px; font-weight: 700; line-height: 1; }
+.score-total span { font-size: 20px; opacity: .8; }
+.score-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; opacity: .95; border-top: 1px solid rgba(255,255,255,.2); margin-top: 8px; }
+.detail-title { font-size: 16px; color: #2d3748; margin: 20px 0 12px; text-align: left; }
+.detail-section { text-align: left; margin-bottom: 20px; }
+.detail-section h5 { font-size: 14px; color: #667eea; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #ebf4ff; }
+.detail-q { background: #f7fafc; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+.detail-q.right { border-left: 3px solid #48bb78; }
+.detail-q.wrong { border-left: 3px solid #f56565; }
+.mark-ok { color: #48bb78; font-weight: 700; margin-right: 6px; }
+.mark-no { color: #f56565; font-weight: 700; margin-right: 6px; }
+.d-no { font-weight: 700; color: #4a5568; }
+.d-ans { font-size: 12px; color: #718096; margin-top: 4px; }
+.d-your { color: #f56565; }
+.d-correct { color: #48bb78; font-weight: 600; }
+.d-exp { font-size: 12px; color: #2c5282; margin-top: 4px; background: #ebf8ff; padding: 6px 8px; border-radius: 6px; }
+
+/* ============ 响应式 ============ */
+@media (max-width: 360px) {
+  .word-en { font-size: 32px; }
+  .question-word { font-size: 24px; }
+  .menu-item .icon { width: 48px; height: 48px; font-size: 24px; }
+}
+
+/* ============ 发音按钮 ============ */
+.pronounce-bar {
+  display: flex; gap: 12px; margin: -8px 0 20px; padding: 0 16px;
+}
+.pron-btn {
+  flex: 1; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2); transition: transform .15s;
+  box-shadow: 0 3px 10px rgba(102,126,234,.3);
+}
+.pron-btn.sentence { background: linear-gradient(135deg, #f6ad55, #ed8936); box-shadow: 0 3px 10px rgba(237,137,54,.3); }
+.pron-btn:active { transform: scale(.96); }
+.pron-btn.small { flex: none; width: auto; padding: 8px 16px; font-size: 13px; }
+.pron-btn.big { font-size: 15px; padding: 14px; }
+.pron-btn.tiny { flex: none; width: 34px; height: 34px; padding: 0; font-size: 16px; border-radius: 50%; }
+.pron-btn.small-stop { flex: none; width: auto; padding: 8px 16px; font-size: 13px; background: linear-gradient(135deg,#a0aec0,#718096); }
+
+.wc-pronounce { text-align: center; margin: 8px 0 12px; }
+.wc-pronounce .pron-btn { display: inline-block; }
+
+/* 单词记忆/挑战中的高亮单词 */
+.hl-word {
+  background: #fef08a; color: #b45309; padding: 2px 4px; border-radius: 4px;
+  font-weight: 700; box-shadow: 0 0 0 2px rgba(254,240,138,.4);
+}
+
+/* ============ 情景对话区 ============ */
+.dialogue-zone { padding: 8px 16px 24px; }
+.zone-title { font-size: 15px; color: #4a5568; margin: 12px 0 14px; padding-left: 8px; border-left: 4px solid #667eea; }
+.dialogue-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+}
+.dlg-card {
+  border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1); transition: transform .15s, box-shadow .15s;
+  min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.dlg-card:active { transform: scale(.96); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+.dlg-emoji { font-size: 36px; margin-bottom: 8px; }
+.dlg-title { font-size: 13px; font-weight: 600; color: #2d3748; line-height: 1.4; }
+.dlg-meta { font-size: 11px; color: #718096; margin-top: 6px; }
+
+/* 对话播放器 */
+.dialogue-player {
+  background: #fff; border-radius: 16px; padding: 0; margin-top: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.1); overflow: hidden;
+}
+.dlg-header {
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 20px 16px;
+  text-align: center; position: relative;
+}
+.dlg-header h3 { font-size: 16px; }
+.dlg-h-emoji { font-size: 32px; margin-bottom: 6px; }
+.dlg-close {
+  position: absolute; right: 12px; top: 12px; width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.2); color: #fff; font-size: 14px;
+}
+.dlg-rounds { padding: 16px; max-height: 360px; overflow-y: auto; }
+.dlg-round { margin-bottom: 14px; position: relative; padding-right: 40px; }
+.dlg-round.right { text-align: right; padding-right: 0; padding-left: 40px; }
+.dlg-round .speaker { font-size: 11px; color: #a0aec0; margin-bottom: 3px; font-weight: 600; }
+.dlg-round .bubble {
+  display: inline-block; padding: 10px 14px; border-radius: 14px; font-size: 14px; color: #2d3748;
+  background: #f1f5f9; line-height: 1.6; max-width: 100%; text-align: left;
+}
+.dlg-round.right .bubble { background: #ebf4ff; }
+.dlg-round .cn { font-size: 12px; color: #718096; margin-top: 4px; }
+.dlg-round .pron-btn.tiny {
+  position: absolute; right: 0; top: 18px;
+}
+.dlg-round.right .pron-btn.tiny { right: auto; left: 0; }
+.dlg-controls { display: flex; gap: 10px; padding: 14px 16px; background: #f7fafc; border-top: 1px solid #e2e8f0; }
+
+/* 对话中的单词高亮 */
+.dlg-round .dw { transition: all .15s; padding: 1px 2px; border-radius: 3px; }
+.dlg-round .dw.active {
+  background: #fbbf24; color: #78350f; font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(251,191,36,.4); transform: scale(1.1);
+}
+
+/* ============ 听力测验模块 ============ */
+.listening-intro { padding: 20px 16px; }
+.listening-intro h3 { font-size: 18px; color: #2d3748; margin-bottom: 14px; }
+.rule-list { background: #fff; border-radius: 12px; padding: 14px 16px 14px 28px; margin-bottom: 16px; }
+.rule-list li { font-size: 13px; color: #4a5568; margin-bottom: 8px; list-style: disc; }
+.rule-list li.highlight-rule { background: linear-gradient(135deg,#ebf4ff,#f0fff4); padding: 10px 12px; border-radius: 8px; list-style: none; margin-left: -28px; color: #2c5282; font-size: 13px; }
+.listening-intro .config-section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+.ability-panel { margin-top: 24px; }
+.ability-panel h4 { font-size: 15px; color: #4a5568; margin-bottom: 12px; }
+
+/* 能力雷达进度条 */
+.radar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; background: #fff; padding: 8px 12px; border-radius: 8px; }
+.radar-name { font-size: 12px; color: #4a5568; width: 56px; flex-shrink: 0; }
+.radar-bar { flex: 1; height: 10px; background: #edf2f7; border-radius: 5px; overflow: hidden; }
+.radar-fill { height: 100%; border-radius: 5px; transition: width .5s; }
+.radar-pct { font-size: 12px; color: #2d3748; font-weight: 700; width: 36px; text-align: right; }
+
+/* 听力答题区 */
+.listening-area { padding: 16px; }
+.listening-timer {
+  display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+  background: #fff; border-radius: 10px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.listening-timer span:first-child { font-size: 15px; font-weight: 700; color: #e53e3e; }
+#listening-progress-text { font-size: 13px; color: #718096; }
+
+.listen-q-card { background: #fff; border-radius: 16px; padding: 20px 16px; box-shadow: 0 4px 14px rgba(0,0,0,.08); margin-bottom: 14px; }
+.listen-q-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.listen-part { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 12px; color: #fff; }
+.listen-part.part-A { background: #48bb78; }
+.listen-part.part-B { background: #4299e1; }
+.listen-part.part-C { background: #9f7aea; }
+.listen-part.part-D { background: #ed8936; }
+.listen-level { font-size: 12px; color: #a0aec0; }
+
+/* 播放按钮区 */
+.listen-audio-area { text-align: center; margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg,#f0f4ff,#ebf4ff); border-radius: 14px; }
+.listen-play-btn {
+  padding: 14px 28px; border-radius: 30px; font-size: 15px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 14px rgba(102,126,234,.4);
+  transition: transform .15s;
+}
+.listen-play-btn:active { transform: scale(.96); }
+.listen-audio-area.playing .listen-play-btn { animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 4px 14px rgba(102,126,234,.4)} 50%{box-shadow:0 4px 24px rgba(102,126,234,.7)} }
+
+/* 音频波纹动画 */
+.listen-wave { display: flex; align-items: center; justify-content: center; gap: 3px; height: 40px; margin-top: 14px; }
+.wave-bar { width: 4px; height: 8px; background: #667eea; border-radius: 2px; transition: height .15s; }
+.listen-audio-area:not(.playing) .wave-bar { height: 8px; }
+
+.listen-question { font-size: 16px; color: #2d3748; font-weight: 600; margin-bottom: 16px; line-height: 1.5; }
+
+/* 听力选项 */
+.listen-options { display: flex; flex-direction: column; gap: 10px; }
+.listen-opt {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px;
+  background: #f7fafc; cursor: pointer; transition: all .15s; border: 2px solid transparent;
+}
+.listen-opt.selected { background: #ebf4ff; border-color: #667eea; }
+.listen-opt .opt-letter {
+  width: 30px; height: 30px; border-radius: 50%; background: #e2e8f0; color: #4a5568;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+.listen-opt.selected .opt-letter { background: #667eea; color: #fff; }
+.listen-opt .opt-text { font-size: 18px; color: #2d3748; }
+
+/* 听写填空 */
+.dict-instruction { font-size: 13px; color: #718096; margin-bottom: 12px; }
+.dict-sentence { font-size: 15px; color: #2d3748; line-height: 2.2; background: #f7fafc; padding: 16px; border-radius: 10px; }
+.dict-text { color: #2d3748; }
+.dict-input {
+  display: inline-block; width: 110px; padding: 6px 10px; margin: 0 4px; border: 2px solid #cbd5e0;
+  border-radius: 8px; font-size: 15px; text-align: center; color: #2d3748; background: #fff;
+}
+.dict-input:focus { border-color: #667eea; outline: none; }
+
+.listening-controls { display: flex; gap: 12px; }
+.listening-controls .pron-btn { flex: 1; }
+
+/* 成绩报告 - 各部分正确率 */
+.part-stats { margin-bottom: 20px; }
+.part-stat { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.part-stat > span:first-child { font-size: 12px; color: #4a5568; width: 130px; flex-shrink: 0; }
+.part-bar { flex: 1; height: 12px; background: #edf2f7; border-radius: 6px; overflow: hidden; }
+.part-fill { height: 100%; border-radius: 6px; transition: width .5s; }
+.part-fill.good { background: linear-gradient(90deg,#48bb78,#38a169); }
+.part-fill.mid { background: linear-gradient(90deg,#ed8936,#dd6b20); }
+.part-fill.bad { background: linear-gradient(90deg,#f56565,#e53e3e); }
+.part-rate { font-size: 12px; font-weight: 700; color: #2d3748; width: 40px; text-align: right; }
+
+/* 智能评价 */
+.evaluation-box { background: linear-gradient(135deg,#ebf4ff,#f0fff4); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: #2c5282; line-height: 1.8; }
+.evaluation-box strong { color: #2d3748; }
+.evaluation-box ul.weak-list { margin: 8px 0 8px 20px; }
+.evaluation-box ul.weak-list li { color: #c53030; font-weight: 600; margin-bottom: 4px; }
+.evaluation-box .trend-up { color: #38a169; font-weight: 600; }
+.evaluation-box .trend-down { color: #e53e3e; font-weight: 600; }
+
+.all-correct { font-size: 16px; color: #38a169; font-weight: 700; text-align: center; padding: 20px; background: #c6f6d5; border-radius: 12px; margin-bottom: 16px; }
+
+/* 错题回顾 */
+.listen-detail-q { background: #fff5f5; border-left: 3px solid #f56565; border-radius: 8px; padding: 12px; margin-bottom: 10px; font-size: 13px; line-height: 1.6; }
+.listen-detail-q .listen-part-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; color: #fff; }
+.listen-detail-q .listen-part-tag.part-A { background: #48bb78; }
+.listen-detail-q .listen-part-tag.part-B { background: #4299e1; }
+.listen-detail-q .listen-part-tag.part-C { background: #9f7aea; }
+.listen-detail-q .listen-part-tag.part-D { background: #ed8936; }
+.listen-detail-q .pron-btn.tiny { margin-top: 8px; }
+
+/* ============ 口音选择区 ============ */
+.accent-section { border: 2px solid #ebf4ff; }
+.accent-btn { font-size: 14px; padding: 12px 8px; }
+.accent-tip { font-size: 12px; color: #667eea; margin-top: 10px; padding: 8px 12px; background: #f7fafc; border-radius: 8px; }
+
+/* ============ 听力双声标签 ============ */
+.listen-voice-tags { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.voice-tag {
+  font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 600;
+  opacity: .55; transition: all .25s;
+}
+.voice-tag.female { background: #fed7e2; color: #97266d; }
+.voice-tag.male { background: #bee3f8; color: #2c5282; }
+.listen-audio-area.male-speaking .voice-tag.male,
+.listen-audio-area.female-speaking .voice-tag.female {
+  opacity: 1; transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.listen-audio-area.female-speaking { background: linear-gradient(135deg,#fff0f6,#ebf4ff) !important; }
+.listen-audio-area.male-speaking { background: linear-gradient(135deg,#ebf8ff,#f0f4ff) !important; }
+
+/* ============ PWA 安装引导横幅（Android/桌面）============ */
+#pwa-install-banner {
+  position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 24px); max-width: 360px; z-index: 9999;
+  background: #fff; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,.25);
+  transition: bottom .35s cubic-bezier(.4,0,.2,1); padding: 12px 14px;
+}
+#pwa-install-banner.show { bottom: 16px; }
+.pwa-banner-inner { display: flex; align-items: center; gap: 12px; }
+.pwa-banner-icon { font-size: 32px; }
+.pwa-banner-text { flex: 1; }
+.pwa-banner-text strong { display: block; font-size: 14px; color: #2d3748; }
+.pwa-banner-text small { font-size: 11px; color: #718096; }
+.pwa-banner-btn {
+  padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2); white-space: nowrap;
+}
+.pwa-banner-close {
+  width: 28px; height: 28px; border-radius: 50%; background: #edf2f7; color: #718096;
+  font-size: 12px; flex-shrink: 0;
+}
+
+/* ============ PWA iOS 安装引导弹窗 ============ */
+#pwa-ios-guide {
+  position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .3s;
+}
+#pwa-ios-guide.show { opacity: 1; }
+.pwa-guide-mask { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+.pwa-guide-box {
+  position: relative; background: #fff; border-radius: 20px; padding: 28px 24px; width: calc(100% - 48px);
+  max-width: 340px; text-align: center; transform: scale(.9); transition: transform .3s;
+}
+#pwa-ios-guide.show .pwa-guide-box { transform: scale(1); }
+.pwa-guide-emoji { font-size: 48px; margin-bottom: 8px; }
+.pwa-guide-box h3 { font-size: 18px; color: #2d3748; margin-bottom: 10px; }
+.pwa-guide-box p { font-size: 13px; color: #718096; margin-bottom: 14px; }
+.pwa-guide-box ol { text-align: left; padding-left: 20px; margin-bottom: 20px; }
+.pwa-guide-box ol li { font-size: 13px; color: #4a5568; margin-bottom: 10px; line-height: 1.6; }
+.ios-share-icon { display: inline-block; color: #667eea; font-weight: 700; }
+.pwa-guide-btn {
+  width: 100%; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* 安卓手动安装教程弹窗（复用 iOS 引导样式）*/
+#pwa-android-guide {
+  position: fixed; inset: 0; z-index: 10001; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .3s;
+}
+#pwa-android-guide.show { opacity: 1; }
+#pwa-android-guide .pwa-guide-mask { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+#pwa-android-guide .pwa-guide-box {
+  position: relative; background: #fff; border-radius: 20px; padding: 28px 24px; width: calc(100% - 48px);
+  max-width: 340px; text-align: center; transform: scale(.9); transition: transform .3s;
+}
+#pwa-android-guide.show .pwa-guide-box { transform: scale(1); }
+.menu-icon {
+  display: inline-block; padding: 1px 8px; background: #edf2f7; border-radius: 6px;
+  font-weight: 700; color: #4a5568; font-size: 16px;
+}
+.guide-tip {
+  font-size: 12px; color: #667eea; background: #ebf4ff; padding: 10px; border-radius: 8px;
+  margin-bottom: 16px; line-height: 1.5;
+}
+
+
+
+

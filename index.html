@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#667eea">
+  <meta name="description" content="初中英语单词、语法、听力、真题一体化学习工具，支持离线使用">
+  <title>初中英语辅导</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- App 图标（各平台）-->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- iOS 主屏 App 模式（关键：让 iOS Safari 支持添加到主屏后全屏运行）-->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="英语辅导">
+  <meta name="application-name" content="英语辅导">
+
+  <!-- Windows 磁贴 -->
+  <meta name="msapplication-TileColor" content="#667eea">
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 首页 -->
+    <div id="home-page" class="page active">
+      <header class="main-header">
+        <h1>📚 初中英语辅导</h1>
+        <p class="subtitle">掌握词汇 · 突破语法 · 轻松提分</p>
+      </header>
+      <!-- 页面内安装按钮（PWA）-->
+      <div class="install-entry" id="install-entry">
+        <button class="install-app-btn" id="install-app-btn" onclick="triggerInstall()">
+          <span class="install-icon">📲</span>
+          <span class="install-text">
+            <strong>安装到桌面</strong>
+            <small>离线随时学，像 App 一样使用</small>
+          </span>
+          <span class="install-arrow">›</span>
+        </button>
+      </div>
+      <nav class="home-menu">
+        <div class="menu-item" onclick="showPage('word-memorize')">
+          <div class="icon">📖</div>
+          <h3>单词记忆</h3>
+          <p>卡片式记忆3000-5000词汇</p>
+        </div>
+        <div class="menu-item" onclick="showPage('grammar-memorize')">
+          <div class="icon">📝</div>
+          <h3>语法记忆</h3>
+          <p>系统学习20大核心语法点</p>
+        </div>
+        <div class="menu-item" onclick="showPage('word-challenge')">
+          <div class="icon">🏆</div>
+          <h3>单词挑战</h3>
+          <p>拼字游戏，错题重考</p>
+        </div>
+        <div class="menu-item" onclick="showPage('grammar-challenge')">
+          <div class="icon">🎯</div>
+          <h3>语法挑战</h3>
+          <p>选择判断，巩固知识</p>
+        </div>
+        <div class="menu-item" onclick="showPage('exam-test')">
+          <div class="icon">📋</div>
+          <h3>真题测试</h3>
+          <p>70词+30法，满分冲刺</p>
+        </div>
+        <div class="menu-item" onclick="showPage('listening-test')">
+          <div class="icon">🎧</div>
+          <h3>听力测验</h3>
+          <p>中考标准，智能自适应强化</p>
+        </div>
+      </nav>
+    </div>
+
+    <!-- 单词记忆页面 -->
+    <div id="word-memorize-page" class="page">
+      <header class="page-header">
+        <button class="back-btn" onclick="showPage('home')"></button>
+        <h2>单词记忆</h2>
+        <div class="grade-tabs">
+          <button class="grade-tab active" data-grade="all" onclick="selectWordGrade('all')">全部</button>
+          <button class="grade-tab" data-grade="7" onclick="selectWordGrade('7')">七年级</button>
+          <button class="grade-tab" data-grade="8" onclick="selectWordGrade('8')">八年级</button>
+          <button class="grade-tab" data-grade="9" onclick="selectWordGrade('9')">九年级</button>
+        </div>
+      </header>
+      <div class="card-container">
+        <div class="word-card-merged" id="word-card">
+          <div class="wcm-top">
+            <div class="word-en" id="word-en"></div>
+            <div class="word-phonetic" id="word-phonetic"></div>
+          </div>
+          <div class="wcm-divider"></div>
+          <div class="wcm-mid">
+            <span class="word-pos" id="word-pos"></span>
+            <span class="word-meaning" id="word-meaning"></span>
+          </div>
+          <div class="wcm-example">
+            <div class="example-label">💬 例句</div>
+            <div class="word-example" id="word-example"></div>
+          </div>
+        </div>
+        <div class="auto-play-indicator" id="auto-play-indicator">
+          <span class="play-dot"></span><span class="play-dot"></span><span class="play-dot"></span>
+          <span class="play-text">自动播报中…</span>
+        </div>
+        <div class="pronounce-bar">
+          <button class="pron-btn" onclick="speakCurrentWord(event)">🔊 重听单词</button>
+          <button class="pron-btn sentence" onclick="speakCurrentExample(event)">💬 重听例句</button>
+        </div>
+        <div class="card-nav">
+          <button class="nav-btn prev-btn" onclick="prevWord()">◀ 上一个</button>
+          <div class="progress-info">
+            <span id="word-progress">1 / 100</span>
+          </div>
+          <button class="nav-btn next-btn" onclick="nextWord()">下一个 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 语法记忆页面 -->
+    <div id="grammar-memorize-page" class="page">
+      <header class="page-header">
+        <button class="back-btn" onclick="showPage('home')"></button>
+        <h2>语法记忆</h2>
+        <div class="grade-tabs">
+          <button class="grade-tab active" onclick="selectGrammarGrade('all', event)">全部</button>
+          <button class="grade-tab" onclick="selectGrammarGrade('7', event)">七年级</button>
+          <button class="grade-tab" onclick="selectGrammarGrade('8', event)">八年级</button>
+          <button class="grade-tab" onclick="selectGrammarGrade('9', event)">九年级</button>
+        </div>
+      </header>
+      <div id="grammar-list" class="grammar-list"></div>
+      <div id="dialogue-zone" class="dialogue-zone hidden">
+        <h3 class="zone-title">🎭 情景对话（点击播放，单词同步高亮）</h3>
+        <div id="dialogue-grid" class="dialogue-grid"></div>
+        <div id="dialogue-player" class="dialogue-player hidden"></div>
+      </div>
+    </div>
+
+    <!-- 单词挑战页面 -->
+    <div id="word-challenge-page" class="page">
+      <header class="page-header">
+        <button class="back-btn" onclick="exitChallenge('word')"></button>
+        <h2 id="wc-title">单词挑战</h2>
+      </header>
+      <div class="challenge-config" id="wc-config">
+        <div class="config-section">
+          <label>选择年级：</label>
+          <div class="btn-group">
+            <button class="config-btn" onclick="selectWcGrade(this, 'all')">全部</button>
+            <button class="config-btn active" onclick="selectWcGrade(this, '7')">七年级</button>
+            <button class="config-btn" onclick="selectWcGrade(this, '8')">八年级</button>
+            <button class="config-btn" onclick="selectWcGrade(this, '9')">九年级</button>
+          </div>
+        </div>
+        <div class="config-section">
+          <label>挑战数量：</label>
+          <div class="btn-group">
+            <button class="config-btn active" onclick="selectWcCount(this, 50)">50个</button>
+            <button class="config-btn" onclick="selectWcCount(this, 100)">100个</button>
+            <button class="config-btn" onclick="selectWcCount(this, 200)">200个</button>
+          </div>
+        </div>
+        <button class="start-btn" onclick="startWordChallenge()">开始挑战 🚀</button>
+      </div>
+      <div class="challenge-area hidden" id="wc-area">
+        <div class="progress-bar"><div class="progress-fill" id="wc-progress-fill"></div></div>
+        <div class="progress-text" id="wc-progress-text">1 / 50</div>
+        <div class="question-card">
+          <div class="question-word" id="wc-question"></div>
+          <div class="question-meaning" id="wc-meaning"></div>
+          <div class="wc-pronounce">
+            <button class="pron-btn small" onclick="speakChallengeWord(event)">🔊 听单词发音</button>
+          </div>
+          <p class="instruction">请拼写这个单词：</p>
+          <input type="text" class="answer-input" id="wc-input" autocomplete="off" spellcheck="false" placeholder="输入英文单词">
+          <div class="btn-row">
+            <button class="action-btn" onclick="checkWordAnswer()">确认</button>
+            <button class="action-btn skip" onclick="skipWordQuestion()">跳过</button>
+          </div>
+        </div>
+      </div>
+      <div class="result-panel hidden" id="wc-result"></div>
+    </div>
+
+    <!-- 语法挑战页面 -->
+    <div id="grammar-challenge-page" class="page">
+      <header class="page-header">
+        <button class="back-btn" onclick="exitChallenge('grammar')"></button>
+        <h2 id="gc-title">语法挑战</h2>
+      </header>
+      <div class="challenge-config" id="gc-config">
+        <div class="config-section">
+          <label>选择年级：</label>
+          <div class="btn-group">
+            <button class="config-btn" onclick="selectGcGrade(this, 'all')">全部</button>
+            <button class="config-btn active" onclick="selectGcGrade(this, '7')">七年级</button>
+            <button class="config-btn" onclick="selectGcGrade(this, '8')">八年级</button>
+            <button class="config-btn" onclick="selectGcGrade(this, '9')">九年级</button>
+          </div>
+        </div>
+        <div class="config-section">
+          <label>挑战数量：</label>
+          <div class="btn-group">
+            <button class="config-btn active" onclick="selectGcCount(this, 20)">20题</button>
+            <button class="config-btn" onclick="selectGcCount(this, 50)">50题</button>
+            <button class="config-btn" onclick="selectGcCount(this, 100)">100题</button>
+          </div>
+        </div>
+        <button class="start-btn" onclick="startGrammarChallenge()">开始挑战 🚀</button>
+      </div>
+      <div class="challenge-area hidden" id="gc-area">
+        <div class="progress-bar"><div class="progress-fill" id="gc-progress-fill"></div></div>
+        <div class="progress-text" id="gc-progress-text">1 / 20</div>
+        <div class="question-card">
+          <p class="question-text" id="gc-question"></p>
+          <div class="options" id="gc-options"></div>
+        </div>
+      </div>
+      <div class="result-panel hidden" id="gc-result"></div>
+    </div>
+
+    <!-- 真题测试页面 -->
+    <div id="exam-test-page" class="page">
+      <header class="page-header">
+        <button class="back-btn" onclick="exitExam()"></button>
+        <h2 id="exam-title">真题测试</h2>
+      </header>
+      <div class="exam-intro" id="exam-intro">
+        <h3>📋 模拟考试规则</h3>
+        <ul>
+          <li><strong>单词部分</strong>：70分（35题选择 + 35题填空）</li>
+          <li><strong>语法部分</strong>：30分（15题选择 + 15题判断）</li>
+          <li><strong>总分</strong>：100分，限时60分钟</li>
+          <li>系统随机出题，每次考试题目不同</li>
+          <li>交卷后查看成绩和解析</li>
+        </ul>
+        <button class="start-btn" onclick="startExam()">开始考试 ⏰</button>
+        <div class="score-history">
+          <h4>📊 历史成绩</h4>
+          <div id="score-list">暂无记录</div>
+        </div>
+      </div>
+      <div class="exam-area hidden" id="exam-area">
+        <div class="exam-timer">
+          <span>⏱ <span id="timer-display">60:00</span></span>
+          <button class="action-btn small" onclick="confirmSubmit()">提交试卷</button>
+        </div>
+        <div class="exam-nav">
+          <button class="exam-tab active" onclick="switchExamSection('word')">单词部分(70分)</button>
+          <button class="exam-tab" onclick="switchExamSection('grammar')">语法部分(30分)</button>
+        </div>
+        <div class="questions-container" id="questions-container"></div>
+      </div>
+      <div class="result-panel hidden" id="exam-result"></div>
+    </div>
+
+    <!-- 听力测验页面 -->
+    <div id="listening-test-page" class="page">
+      <header class="page-header">
+        <button class="back-btn" onclick="exitListening()"></button>
+        <h2 id="listening-title">听力测验</h2>
+      </header>
+      <div class="listening-intro" id="listening-intro">
+        <h3>🎧 中考听力模拟测验</h3>
+        <ul class="rule-list">
+          <li><strong>A 部分</strong>：听句子/对话，选图片（5题 × 4分 = 20分）</li>
+          <li><strong>B 部分</strong>：听短对话，选答案（10题 × 4分 = 40分）</li>
+          <li><strong>C 部分</strong>：听长对话/独白，选答案（5题 × 4分 = 20分）</li>
+          <li><strong>D 部分</strong>：听写填空（5题 × 4分 = 20分）</li>
+          <li class="highlight-rule">🧠 <strong>智能自适应</strong>：系统会根据你的历史成绩，自动针对薄弱环节加大出题权重，逐步补齐短板</li>
+          <li class="highlight-rule">👥 <strong>双声对话</strong>：对话中两位说话者分别用<strong>女声</strong>（说话者A）和<strong>男声</strong>（说话者B），题目问题用<strong>男声</strong>播报，帮你适应不同发音者</li>
+        </ul>
+        <div class="config-section">
+          <label>选择年级范围：</label>
+          <div class="btn-group">
+            <button class="config-btn active" onclick="selectListeningScope(this, 'all')">全部范围</button>
+            <button class="config-btn" onclick="selectListeningScope(this, '7')">七年级</button>
+            <button class="config-btn" onclick="selectListeningScope(this, '8')">八年级</button>
+            <button class="config-btn" onclick="selectListeningScope(this, '9')">九年级</button>
+          </div>
+        </div>
+        <div class="config-section accent-section">
+          <label>选择发音口音（适应不同发音方式）：</label>
+          <div class="btn-group">
+            <button class="config-btn accent-btn active" onclick="selectAccent(this, 'US')">🇺🇸 美式发音</button>
+            <button class="config-btn accent-btn" onclick="selectAccent(this, 'GB')">🇬🇧 英式发音</button>
+          </div>
+          <p class="accent-tip" id="accent-tip">已选美式发音：背景女声 + 提问男声</p>
+        </div>
+        <button class="start-btn" onclick="startListeningTest()">开始听力测验 🎧</button>
+        <div class="score-history">
+          <h4>📊 听力成绩记录</h4>
+          <div id="listening-score-list">暂无记录</div>
+        </div>
+        <div class="ability-panel" id="ability-panel">
+          <h4>🧠 你的听力能力雷达</h4>
+          <div id="ability-radar"></div>
+        </div>
+      </div>
+      <div class="listening-area hidden" id="listening-area">
+        <div class="listening-timer">
+          <span>⏱ <span id="listening-timer-display">--:--</span></span>
+          <span id="listening-progress-text">第 1 题</span>
+        </div>
+        <div id="listening-question-container"></div>
+        <div class="listening-controls">
+          <button class="pron-btn" onclick="replayListening()">🔊 重新播放</button>
+          <button class="pron-btn sentence" onclick="nextListeningQuestion()">下一题 ▶</button>
+        </div>
+      </div>
+      <div class="result-panel hidden" id="listening-result"></div>
+    </div>
+  </div>
+
+  <script src="js/words.js"></script>
+  <script src="js/grammar.js"></script>
+  <script src="js/dialogues.js"></script>
+  <script src="js/listening.js"></script>
+  <script src="js/speak.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA：Service Worker 注册 + 路由 + 安装引导 -->
+  <script>
+  (function () {
+    'use strict';
+
+    // 1) URL 参数路由：支持 ?page=word-memorize 直接进对应页（用于 manifest shortcuts）
+    window.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      var page = params.get('page');
+      if (page && typeof window.showPage === 'function') {
+        // 稍延迟，确保 app.js 初始化完成
+        setTimeout(function () { window.showPage(page); }, 100);
+      }
+    });
+
+    // 2) 注册 Service Worker（仅 https 或 localhost 生效）
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js').then(function (reg) {
+          console.log('[PWA] Service Worker 注册成功，离线模式已启用');
+          // 监听更新
+          reg.addEventListener('updatefound', function () {
+            var newWorker = reg.installing;
+            newWorker.addEventListener('statechange', function () {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // 有新版本，可提示用户刷新
+                console.log('[PWA] 检测到新版本，刷新以更新');
+              }
+            });
+          });
+        }).catch(function (err) {
+          console.warn('[PWA] Service Worker 注册失败:', err);
+        });
+      });
+    }
+
+    // 3) 安装引导：保留原生 ⊕ 图标，同时提供页面内安装按钮和教程兜底
+    var deferredPrompt = null;
+
+    // 页面内「安装 App」按钮 —— 挂到 window，供 onclick 调用
+    window.triggerInstall = function () {
+      // 已安装：直接提示
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        alert('✅ 已经是安装状态了，本应用正在以 App 模式运行');
+        return;
+      }
+      // 有原生事件：触发系统安装弹窗（Chrome/Edge/部分国产浏览器）
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (choice) {
+          if (choice.outcome === 'accepted') {
+            console.log('[PWA] 用户同意安装');
+            hideInstallButton();
+          }
+          deferredPrompt = null;
+        });
+        return;
+      }
+      // 没有原生事件（多数国产浏览器）：弹出手动安装教程
+      showAndroidManualGuide();
+    };
+
+    // 检测是否已安装，决定按钮显隐
+    function updateInstallButton() {
+      var btn = document.getElementById('install-entry');
+      if (!btn) return;
+      // 已安装则隐藏按钮
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        btn.style.display = 'none';
+        return;
+      }
+      // 未安装：始终显示（不依赖 beforeinstallprompt）
+      btn.style.display = 'block';
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      // 【关键】不调用 preventDefault()，让地址栏 ⊕ 图标正常显示
+      // 只缓存事件，供页面内按钮和横幅的一键安装使用
+      deferredPrompt = e;
+    });
+
+    // 监听安装完成，隐藏按钮
+    window.addEventListener('appinstalled', function () {
+      console.log('[PWA] 安装成功');
+      hideInstallButton();
+      var btn = document.getElementById('install-entry');
+      if (btn) btn.style.display = 'none';
+    });
+
+    function hideInstallButton() {
+      var banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.remove();
+    }
+
+    // 页面加载后显示按钮
+    window.addEventListener('DOMContentLoaded', updateInstallButton);
+
+    // 安卓手动安装教程（国产浏览器可能不支持 beforeinstallprompt）
+    function showAndroidManualGuide() {
+      var ua = navigator.userAgent.toLowerCase();
+      var browser = /miuibrowser/.test(ua) ? '小米浏览器' :
+                    /huawei|hbpc/.test(ua) ? '华为浏览器' :
+                    /oppo|heytap/.test(ua) ? 'OPPO浏览器' :
+                    /vivobrowser/.test(ua) ? 'vivo浏览器' :
+                    /ucbrowser/.test(ua) ? 'UC浏览器' :
+                    /qqbrowser/.test(ua) ? 'QQ浏览器' :
+                    '浏览器';
+      var guide = document.createElement('div');
+      guide.id = 'pwa-android-guide';
+      guide.innerHTML =
+        '<div class="pwa-guide-mask"></div>' +
+        '<div class="pwa-guide-box">' +
+          '<div class="pwa-guide-emoji">📲</div>' +
+          '<h3>添加到主屏幕</h3>' +
+          '<p>把「英语辅导」装到桌面，离线随时学：</p>' +
+          '<ol>' +
+            '<li>点击浏览器菜单 <span class="menu-icon">☰</span> 或 <span class="menu-icon">⋮</span></li>' +
+            '<li>选择「添加到主屏幕」或「添加书签」</li>' +
+            '<li>确认添加，桌面会出现 App 图标</li>' +
+            '<li>点开桌面图标即可全屏离线使用</li>' +
+          '</ol>' +
+          '<div class="guide-tip">💡 当前' + browser + '：也可在菜单里找「下载」→「添加到主屏幕」</div>' +
+          '<button class="pwa-guide-btn" id="pwa-guide-ok">我知道了</button>' +
+        '</div>';
+      document.body.appendChild(guide);
+      setTimeout(function () { guide.classList.add('show'); }, 50);
+      document.getElementById('pwa-guide-ok').addEventListener('click', function () {
+        guide.classList.remove('show');
+        setTimeout(function () { guide.remove(); }, 300);
+      });
+    }
+
+    // 4) iOS 手动安装引导（iOS 不支持 beforeinstallprompt，需手动指引）
+    function showIOSGuide() {
+      var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      var isSafari = /safari/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+      var isStandalone = window.navigator.standalone === true ||
+                         window.matchMedia('(display-mode: standalone)').matches;
+      if (!isIOS || !isSafari || isStandalone) return;
+
+      try {
+        if (sessionStorage.getItem('pwa-banner-dismissed')) return;
+        if (localStorage.getItem('pwa-ios-guide-shown')) return;
+      } catch (e) {}
+
+      var dismissed = false;
+      // 首次访问 5 秒后提示
+      setTimeout(function () {
+        if (dismissed) return;
+        var guide = document.createElement('div');
+        guide.id = 'pwa-ios-guide';
+        guide.innerHTML =
+          '<div class="pwa-guide-mask"></div>' +
+          '<div class="pwa-guide-box">' +
+            '<div class="pwa-guide-emoji">📲</div>' +
+            '<h3>添加到主屏幕</h3>' +
+            '<p>把"英语辅导"装到桌面，离线随时学：</p>' +
+            '<ol>' +
+              '<li>点击底部分享按钮 <span class="ios-share-icon">􀈂</span></li>' +
+              '<li>选择「添加到主屏幕」</li>' +
+              '<li>点击「添加」</li>' +
+            '</ol>' +
+            '<button class="pwa-guide-btn" id="pwa-guide-ok">我知道了</button>' +
+          '</div>';
+        document.body.appendChild(guide);
+        setTimeout(function () { guide.classList.add('show'); }, 50);
+        document.getElementById('pwa-guide-ok').addEventListener('click', function () {
+          guide.classList.remove('show');
+          setTimeout(function () { guide.remove(); }, 300);
+          try { localStorage.setItem('pwa-ios-guide-shown', '1'); } catch (e) {}
+        });
+      }, 5000);
+    }
+
+    window.addEventListener('DOMContentLoaded', showIOSGuide);
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# 备份文件
+*.bak
+*.backup
+
+# 临时构建脚本
+build-*.js
+merge-*.js
+generate-*.js
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 依赖
+node_modules/
+
+# 日志
+*.log
