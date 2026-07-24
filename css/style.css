@@ -564,6 +564,58 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
   margin-bottom: 16px; line-height: 1.5;
 }
 
+/* ============ 登录页 ============ */
+#login-page { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-box { background: #fff; border-radius: 24px; padding: 40px 28px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.login-header { text-align: center; margin-bottom: 28px; }
+.login-logo { font-size: 56px; margin-bottom: 8px; }
+.login-header h1 { font-size: 22px; color: #2d3748; margin-bottom: 6px; }
+.login-header p { font-size: 13px; color: #718096; }
+.login-field { margin-bottom: 18px; }
+.login-field label { display: block; font-size: 13px; color: #4a5568; margin-bottom: 6px; font-weight: 600; }
+.login-field input { width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; transition: border-color .2s; }
+.login-field input:focus { border-color: #667eea; outline: none; }
+.login-error { color: #e53e3e; font-size: 13px; min-height: 20px; margin-bottom: 8px; text-align: center; }
+.login-btn { width: 100%; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 8px; box-shadow: 0 4px 14px rgba(102,126,234,.4); }
+.login-btn:active { transform: scale(.97); }
+.login-btn:disabled { opacity: .6; }
+.login-hint { font-size: 11px; color: #a0aec0; text-align: center; margin-top: 16px; }
+
+/* ============ 用户信息栏 ============ */
+.user-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.15); border-radius: 20px; padding: 8px 14px; margin-bottom: 16px; backdrop-filter: blur(10px); }
+.user-info { display: flex; align-items: center; gap: 8px; color: #fff; }
+.user-avatar { font-size: 22px; }
+.user-name { font-size: 14px; font-weight: 600; }
+.user-login-count { font-size: 11px; background: rgba(255,255,255,.25); padding: 2px 10px; border-radius: 10px; }
+.logout-btn { background: rgba(255,255,255,.2); color: #fff; padding: 5px 14px; border-radius: 14px; font-size: 12px; }
+.logout-btn:active { background: rgba(255,255,255,.35); }
+
+/* ============ 管理员面板 ============ */
+.admin-content { padding: 16px; }
+.admin-section { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.admin-section h3 { font-size: 15px; color: #2d3748; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+.admin-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.admin-form input, .admin-form select { padding: 11px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; }
+.admin-form input:focus, .admin-form select:focus { border-color: #667eea; outline: none; }
+.admin-btn { grid-column: span 2; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #667eea, #764ba2); }
+.admin-btn-small { font-size: 12px; padding: 4px 12px; border-radius: 12px; background: #edf2f7; color: #4a5568; }
+.admin-result { grid-column: span 2; font-size: 13px; margin-top: 8px; min-height: 18px; }
+.admin-result .ok { color: #38a169; }
+.admin-result .err { color: #e53e3e; }
+
+.user-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.user-table th { background: #667eea; color: #fff; padding: 10px 8px; text-align: left; font-size: 12px; }
+.user-table th:first-child { border-radius: 8px 0 0 0; }
+.user-table th:last-child { border-radius: 0 8px 0 0; text-align: center; }
+.user-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; color: #4a5568; }
+.user-table td:last-child { text-align: center; }
+.role-tag { font-size: 11px; padding: 2px 10px; border-radius: 10px; color: #fff; }
+.role-tag.admin { background: #e53e3e; }
+.role-tag.student { background: #48bb78; }
+.admin-btn-tiny { font-size: 11px; padding: 4px 8px; border-radius: 8px; background: #ebf4ff; color: #3182ce; margin: 1px; }
+.admin-btn-tiny.danger { background: #fff5f5; color: #e53e3e; }
+.muted { color: #cbd5e0; }
+
 
 
 

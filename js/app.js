@@ -1432,10 +1432,237 @@
     renderAbilityRadar();
   }
 
+  // ============================================================
+  // ============ 账户认证 UI（登录/用户栏/管理员） =============
+  // ============================================================
+
+  // 全局：记录上次保存数据的时间戳（节流）
+  var lastSaveTime = 0;
+
+  /** 登录处理 */
+  window.handleLogin = async function () {
+    var username = $('login-username').value.trim();
+    var password = $('login-password').value;
+    var errEl = $('login-error');
+    var btn = $('login-submit');
+    if (!username || !password) { errEl.textContent = '请输入用户名和密码'; return; }
+    errEl.textContent = '';
+    btn.textContent = '登录中...';
+    btn.disabled = true;
+    try {
+      var r = await window.Auth.login(username, password);
+      if (!r.ok) {
+        errEl.textContent = r.error || '登录失败';
+        btn.textContent = '登 录';
+        btn.disabled = false;
+        return;
+      }
+      // 缓存管理员密码（供 RPC 调用）
+      if (window.Auth.isAdmin()) window.Auth._cacheAdminPwd(await window.Auth_sha256(password));
+      // 加载用户数据并恢复
+      await restoreUserData(window.Auth.current.id);
+      // 显示首页 + 登录欢迎
+      enterApp(r.loginCount);
+    } catch (e) {
+      errEl.textContent = '网络错误：' + e.message;
+      btn.textContent = '登 录';
+      btn.disabled = false;
+    }
+  };
+
+  /** SHA256 暴露给登录逻辑（auth.js 内部用，这里也需要） */
+  window.Auth_sha256 = async function (text) {
+    if (window.crypto && window.crypto.subtle) {
+      var buf = new TextEncoder().encode(text);
+      var hash = await window.crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hash)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+    return text; // 降级
+  };
+
+  /** 进入应用主页 */
+  function enterApp(loginCount) {
+    $('login-page').classList.remove('active');
+    $('home-page').classList.add('active');
+    renderUserBar(loginCount);
+    // 管理员显示用户管理入口
+    if (window.Auth.isAdmin()) {
+      var adminEntries = document.querySelectorAll('.admin-only');
+      for (var i = 0; i < adminEntries.length; i++) adminEntries[i].classList.remove('hidden');
+    }
+    state.currentPage = 'home';
+    // 首次登录提示
+    if (loginCount === 1) {
+      setTimeout(function () { alert('🎉 欢迎首次使用！'); }, 300);
+    }
+  }
+
+  /** 渲染顶部用户信息栏 */
+  function renderUserBar(loginCount) {
+    var u = window.Auth.current;
+    if (!u) return;
+    var html =
+      '<div class="user-info">' +
+        '<span class="user-avatar">' + (u.role === 'admin' ? '👨‍💼' : '👤') + '</span>' +
+        '<span class="user-name">' + u.nickname + '</span>' +
+        '<span class="user-login-count">第 ' + loginCount + ' 次登录</span>' +
+      '</div>' +
+      '<button class="logout-btn" onclick="handleLogout()">退出</button>';
+    $('user-bar').innerHTML = html;
+  }
+
+  /** 退出登录：先保存数据 */
+  window.handleLogout = async function () {
+    if (!confirm('确定退出登录吗？学习进度已自动保存。')) return;
+    try { await saveUserData(); } catch (e) {}
+    window.Auth.logout();
+    location.reload();
+  };
+
+  /** 恢复用户学习数据 */
+  async function restoreUserData(userId) {
+    try {
+      var data = await window.Auth.loadData(userId);
+      if (!data) return;
+      // 恢复单词记忆进度
+      if (data.wm_grade) state.wmGrade = data.wm_grade;
+      // 恢复真题历史
+      if (data.exam_scores) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data.exam_scores)); } catch (e) {}
+      }
+      // 恢复听力历史
+      if (data.listen_scores) {
+        try { localStorage.setItem(LISTENING_KEY, JSON.stringify(data.listen_scores)); } catch (e) {}
+      }
+      // 恢复听力统计（自适应）
+      if (data.listen_stats) {
+        try { localStorage.setItem('english_listening_stats', JSON.stringify(data.listen_stats)); } catch (e) {}
+      }
+    } catch (e) { console.warn('恢复数据失败:', e.message); }
+  }
+
+  /** 保存用户学习数据到云端 */
+  async function saveUserData() {
+    if (!window.Auth.current) return;
+    var now = Date.now();
+    if (now - lastSaveTime < 5000) return; // 5秒节流
+    lastSaveTime = now;
+    var data = {
+      user_id: window.Auth.current.id,
+      wm_grade: state.wmGrade,
+      wm_index: state.wmIndex,
+      wc_total: state.wc.totalAnswered || 0,
+      wc_correct: state.wc.correctCount || 0,
+      exam_scores: loadScores(),
+      listen_scores: loadListeningRecords(),
+      listen_stats: {},
+      updated_at: new Date().toISOString()
+    };
+    try { await window.Auth.saveData(window.Auth.current.id, data); } catch (e) {}
+  }
+
+  // 定期自动保存（每30秒）
+  setInterval(function () { if (window.Auth.current) saveUserData(); }, 30000);
+  // 页面隐藏时保存（切后台/关闭）
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && window.Auth.current) saveUserData();
+  });
+
+  // ===== 管理员面板逻辑 =====
+
+  /** 创建用户 */
+  window.handleCreateUser = async function () {
+    var username = $('new-username').value.trim();
+    var password = $('new-password').value;
+    var nickname = $('new-nickname').value.trim() || username;
+    var role = $('new-role').value;
+    var resultEl = $('create-result');
+    if (!username || !password) { resultEl.innerHTML = '<span class="err">请填写用户名和密码</span>'; return; }
+    resultEl.innerHTML = '创建中...';
+    try {
+      var r = await window.Auth.createUser(username, password, role, nickname);
+      if (r.ok) {
+        resultEl.innerHTML = '<span class="ok">✓ 用户 ' + username + ' 创建成功</span>';
+        $('new-username').value = ''; $('new-password').value = ''; $('new-nickname').value = '';
+        loadUserList();
+      } else {
+        resultEl.innerHTML = '<span class="err">' + (r.error || '创建失败') + '</span>';
+      }
+    } catch (e) { resultEl.innerHTML = '<span class="err">网络错误</span>'; }
+  };
+
+  /** 加载用户列表 */
+  window.loadUserList = async function () {
+    var el = $('user-list');
+    if (!el) return;
+    el.innerHTML = '加载中...';
+    try {
+      var users = await window.Auth.listUsers();
+      if (!Array.isArray(users)) { el.innerHTML = '<span class="err">加载失败</span>'; return; }
+      var html = '<table class="user-table"><tr><th>用户名</th><th>昵称</th><th>角色</th><th>登录次数</th><th>操作</th></tr>';
+      users.forEach(function (u) {
+        var isAdminRow = u.role === 'admin';
+        html += '<tr>' +
+          '<td>' + u.username + '</td>' +
+          '<td>' + (u.nickname || '-') + '</td>' +
+          '<td><span class="role-tag ' + u.role + '">' + (u.role === 'admin' ? '管理员' : '学生') + '</span></td>' +
+          '<td>' + (u.login_count || 0) + '</td>' +
+          '<td>' + (isAdminRow ? '<span class="muted">-</span>' :
+            '<button class="admin-btn-tiny" onclick="handleResetPwd(\'' + u.username + '\')">重置密码</button> ' +
+            '<button class="admin-btn-tiny danger" onclick="handleDeleteUser(\'' + u.username + '\')">删除</button>') +
+          '</td>' +
+          '</tr>';
+      });
+      html += '</table>';
+      el.innerHTML = html;
+    } catch (e) { el.innerHTML = '<span class="err">网络错误</span>'; }
+  };
+
+  /** 重置密码 */
+  window.handleResetPwd = async function (username) {
+    var newPwd = prompt('为 ' + username + ' 设置新密码：', '123456');
+    if (!newPwd) return;
+    try {
+      var r = await window.Auth.resetPassword(username, newPwd);
+      alert(r.ok ? '✓ 密码已重置为：' + newPwd : '重置失败');
+    } catch (e) { alert('网络错误'); }
+  };
+
+  /** 删除用户 */
+  window.handleDeleteUser = async function (username) {
+    if (!confirm('确定删除用户 ' + username + ' 吗？此操作不可恢复。')) return;
+    try {
+      var r = await window.Auth.deleteUser(username);
+      if (r.ok) { alert('✓ 已删除'); loadUserList(); }
+      else alert('删除失败');
+    } catch (e) { alert('网络错误'); }
+  };
+
+  // 进入管理员页时加载用户列表
+  var origShowPageAdmin = window.showPage;
+  window.showPage = function (name) {
+    origShowPageAdmin(name);
+    if (name === 'admin') loadUserList();
+  };
+
   // ============ 初始化 ============
   // 默认加载首页数据，供首次切到单词页时使用
   state.wmList = shuffle(getWordsByGrade('all'));
 
+  // 启动时检查登录状态
+  window.Auth.init();
+  if (window.Auth.isLoggedIn()) {
+    // 已登录：直接进入应用（用本地缓存的登录次数）
+    $('login-page').classList.remove('active');
+    $('home-page').classList.add('active');
+    renderUserBar(window.Auth.current.loginCount || 1);
+    if (window.Auth.isAdmin()) {
+      var adminEntries0 = document.querySelectorAll('.admin-only');
+      for (var k = 0; k < adminEntries0.length; k++) adminEntries0[k].classList.remove('hidden');
+    }
+    state.currentPage = 'home';
+  }
+
   // 暴露调试入口
-  window.__APP__ = { state: state, ALL_WORDS: ALL_WORDS };
+  window.__APP__ = { state: state, ALL_WORDS: ALL_WORDS, Auth: window.Auth, saveUserData: saveUserData };
 })();
