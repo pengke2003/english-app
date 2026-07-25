@@ -98,10 +98,7 @@
     var u = new SpeechSynthesisUtterance(word);
     u.lang = opts.accent === 'GB' ? 'en-GB' : 'en-US';
     var voice = pickVoice(opts.accent || 'US', opts.gender || 'female');
-    if (voice) {
-      u.voice = voice;
-      u.lang = voice.lang;  // 关键：用实际voice的语言，避免lang与voice不匹配导致静音
-    }
+    if (voice) u.voice = voice;
     u.rate = opts.rate || 0.9;
     u.pitch = opts.gender === 'male' ? 0.9 : 1.05;  // 男声略低沉，女声略明亮
     if (opts.onEnd) u.onend = opts.onEnd;
@@ -124,10 +121,7 @@
     var u = new SpeechSynthesisUtterance(sentence);
     u.lang = opts.accent === 'GB' ? 'en-GB' : 'en-US';
     var voice = pickVoice(opts.accent || 'US', opts.gender || 'female');
-    if (voice) {
-      u.voice = voice;
-      u.lang = voice.lang;  // 关键：用实际voice的语言
-    }
+    if (voice) u.voice = voice;
     u.rate = opts.rate || 0.85;
     u.pitch = opts.gender === 'male' ? 0.9 : 1.05;
 
