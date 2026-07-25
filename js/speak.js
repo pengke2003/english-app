@@ -82,6 +82,10 @@
     if (currentHighlightFn) { try { currentHighlightFn(-1); } catch (e) {} currentHighlightFn = null; }
   }
 
+  // Chrome兼容：cancel后需要短暂延迟才能speak，否则可能静音
+  var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+  var speakDelay = isChrome ? 200 : 0;
+
   /**
    * 朗读单个单词
    * @param {string} word

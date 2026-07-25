@@ -1087,7 +1087,6 @@
     var area = $('listen-audio-area');
     var wave = $('listen-wave');
 
-    // 波纹动画辅助
     function animateWave() {
       if (wave && wave.children) {
         var bars = wave.children;
@@ -1097,46 +1096,54 @@
       }
     }
 
-    // 阶段1：男声报题号引导（如 "Question 3."）
-    if (area) area.classList.add('male-speaking');
-    window.Speak.word(guide, {
-      accent: accent, gender: 'male', rate: 0.9,
-      onEnd: function () {
-        // 阶段2：对话原文按说话人标记区分男女声播报
-        if (area) area.classList.remove('male-speaking');
-        window.Speak.dialogue(audio, {
-          accent: accent,
-          defaultGender: 'female',   // 无标记的整句默认女声
-          rate: 0.8,
-          segmentGap: 380,           // 对话段间停顿
-          onSegment: function (idx, total, gender) {
-            // 根据当前说话人切换声音标签高亮
-            if (!area) return;
-            if (gender === 'male') {
-              area.classList.remove('female-speaking');
-              area.classList.add('male-speaking', 'playing');
-            } else {
-              area.classList.remove('male-speaking');
-              area.classList.add('female-speaking', 'playing');
-            }
-            animateWave();
-          },
-          onWord: function (idx) { animateWave(); },
-          onEnd: function () {
-            // 阶段3：男声播报问题（让学生听清要答什么）
-            if (area) { area.classList.remove('female-speaking'); area.classList.add('male-speaking'); }
-            // 问题前加 "Question:" 引导，便于学生识别
-            var qText = 'Question. ' + question;
-            window.Speak.sentence(qText, null, {
-              accent: accent, gender: 'male', rate: 0.82,
-              onEnd: function () {
-                if (area) area.classList.remove('playing', 'male-speaking', 'female-speaking');
-              }
-            });
-          }
-        });
+    // 构建播放步骤：题号引导 → 对话各段 → 问题
+    var steps = [];
+    steps.push({ text: guide, gender: 'male', rate: 0.9 });
+    var segs = parseDialogueSegments(audio);
+    segs.forEach(function (s) { steps.push({ text: s.text, gender: s.gender, rate: 0.8 }); });
+    steps.push({ text: 'Question. ' + question, gender: 'male', rate: 0.82 });
+
+    var stepIdx = 0;
+    function playNext() {
+      if (stepIdx >= steps.length) {
+        if (area) area.classList.remove('playing', 'male-speaking', 'female-speaking');
+        return;
       }
-    });
+      var step = steps[stepIdx];
+      if (area) {
+        area.classList.remove('male-speaking', 'female-speaking');
+        area.classList.add('playing', step.gender === 'male' ? 'male-speaking' : 'female-speaking');
+      }
+      animateWave();
+      // 统一用 speakSentence（已含lang跟随voice的降级逻辑）
+      window.Speak.sentence(step.text, null, {
+        accent: accent, gender: step.gender, rate: step.rate,
+        onEnd: function () { stepIdx++; setTimeout(playNext, 350); }
+      });
+    }
+    playNext();
+  }
+
+  // 解析对话文本的 W:/M: 标记
+  function parseDialogueSegments(audio) {
+    var segments = [];
+    var pattern = /\b([WM]):\s*/g;
+    if (!pattern.test(audio)) return [{ text: audio, gender: 'female' }];
+    pattern.lastIndex = 0;
+    var match, currentGender = null, currentStart = 0;
+    while ((match = pattern.exec(audio)) !== null) {
+      if (currentGender !== null && match.index > currentStart) {
+        var t = audio.slice(currentStart, match.index).trim();
+        if (t) segments.push({ text: t, gender: currentGender });
+      }
+      currentGender = match[1] === 'W' ? 'female' : 'male';
+      currentStart = pattern.lastIndex;
+    }
+    if (currentGender !== null && currentStart < audio.length) {
+      var t2 = audio.slice(currentStart).trim();
+      if (t2) segments.push({ text: t2, gender: currentGender });
+    }
+    return segments.length ? segments : [{ text: audio, gender: 'female' }];
   }
 
   // 渲染听写填空题
