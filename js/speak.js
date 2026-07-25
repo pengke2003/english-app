@@ -64,15 +64,12 @@
         if (v.lang.indexOf(langPrefix) === 0 && v.name.indexOf(nameList[i]) >= 0) return v;
       }
     }
-    // 3) 只要口音对（不挑性别）
-    var exactLang = voicesCache.find(function (v) { return v.lang === lang; });
-    if (exactLang) return exactLang;
-    var prefixLang = voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; });
-    if (prefixLang) return prefixLang;
-    // 4) 兜底：没有指定口音的voice，用任意英语voice（保证有声音）
-    var anyEn = voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; });
-    console.warn('[Speak] 无', lang, '发音人，降级使用', anyEn ? anyEn.lang : '无', '-', anyEn ? anyEn.name : '');
-    return anyEn || null;
+    // 3) 退而求其次：只要口音对（不挑性别）
+    var fallback = voicesCache.find(function (v) { return v.lang === lang; })
+                 || voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; })
+                 || voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; })
+                 || null;
+    return fallback;
   }
 
   /** 停止所有朗读 */
@@ -81,10 +78,6 @@
     currentUtter = null;
     if (currentHighlightFn) { try { currentHighlightFn(-1); } catch (e) {} currentHighlightFn = null; }
   }
-
-  // Chrome兼容：cancel后需要短暂延迟才能speak，否则可能静音
-  var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-  var speakDelay = isChrome ? 200 : 0;
 
   /**
    * 朗读单个单词
