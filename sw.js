@@ -6,7 +6,7 @@
  *   3. fetch 阶段：缓存优先（离线时直接返回缓存），缓存未命中再请求网络
  * 版本号更新（CACHE_VERSION）可强制刷新缓存
  */
-var CACHE_VERSION = 'english-app-v2.7.0';
+var CACHE_VERSION = 'english-app-v3.0.0';
 var CACHE_NAME = CACHE_VERSION;
 
 // 需要预缓存的核心资源
@@ -75,34 +75,20 @@ self.addEventListener('fetch', function (event) {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   event.respondWith(
-    caches.match(event.request).then(function (cachedResponse) {
-      // 命中缓存：直接返回（离线可用）
-      if (cachedResponse) {
-        // 后台静默更新缓存（stale-while-revalidate 策略）
-        fetch(event.request).then(function (networkResponse) {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(event.request, networkResponse.clone());
-            });
-          }
-        }).catch(function () {
-          // 离线时静默忽略
-        });
-        return cachedResponse;
-      }
-
-      // 未命中缓存：从网络获取，成功则缓存
-      return fetch(event.request).then(function (networkResponse) {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
-        }
-        var responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then(function (cache) {
-          cache.put(event.request, responseToCache);
-        });
+    // 网络优先策略：优先从网络获取最新版本，失败时才用缓存
+    fetch(event.request).then(function (networkResponse) {
+      if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
         return networkResponse;
-      }).catch(function () {
-        // 网络失败且无缓存：返回首页（让 SPA 路由处理）
+      }
+      var responseToCache = networkResponse.clone();
+      caches.open(CACHE_NAME).then(function (cache) {
+        cache.put(event.request, responseToCache);
+      });
+      return networkResponse;
+    }).catch(function () {
+      // 网络失败：用缓存（离线可用）
+      return caches.match(event.request).then(function (cachedResponse) {
+        if (cachedResponse) return cachedResponse;
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
