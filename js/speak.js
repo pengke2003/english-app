@@ -40,7 +40,14 @@
       }
     }
     if (!voicesCache.length) loadVoices();
-    console.log('[Speak] 可用发音人数:', voicesCache.length, '| 请求口音:', accent, '性别:', gender);
+    // 打印所有英语发音人（诊断用）
+    var enVoices = voicesCache.filter(function (v) { return v.lang && v.lang.indexOf('en') === 0; });
+    console.log('[Speak] 总发音人:', voicesCache.length, '| 英语发音人:', enVoices.length,
+      '| 英式:', voicesCache.filter(function(v){return v.lang==='en-GB';}).length,
+      '| 请求:', accent, gender);
+    if (enVoices.length > 0 && enVoices.length <= 30) {
+      enVoices.forEach(function (v) { console.log('  -', v.name, v.lang); });
+    }
     var lang = accent === 'GB' ? 'en-GB' : 'en-US';
     var langPrefix = accent === 'GB' ? 'en-GB' : 'en-US';
 
@@ -75,13 +82,13 @@
     // 3) 退而求其次：只要口音对（不挑性别）
     var fallback = voicesCache.find(function (v) { return v.lang === lang; })
                  || voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; })
+                 || voicesCache.find(function (v) { return v.lang === 'en-US'; })   // 英式找不到时用美式
                  || voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; })
-                 || voicesCache[0]  // 终极兜底：用第一个发音人（保证有声音）
                  || null;
     if (fallback) {
       console.log('[Speak] 选中:', fallback.name, fallback.lang);
     } else {
-      console.warn('[Speak] 无任何可用发音人!');
+      console.warn('[Speak] 无任何可用发音人! voicesCache[0]:', voicesCache[0] ? voicesCache[0].name : '空');
     }
     return fallback;
   }
