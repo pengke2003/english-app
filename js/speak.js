@@ -51,13 +51,13 @@
     var lang = accent === 'GB' ? 'en-GB' : 'en-US';
     var langPrefix = accent === 'GB' ? 'en-GB' : 'en-US';
 
-    // 女声常见名字关键词
+    // 女声常见名字关键词（本地发音人优先，Google在线发音人靠后——国内网络不稳）
     var femaleNames = ['Samantha', 'Victoria', 'Karen', 'Moira', 'Tessa', 'Fiona',
       'Serena', 'Allison', 'Ava', 'Susan', 'Zira', 'Hazel', 'Catherine',
-      'Google US English', 'Google UK English Female', 'Microsoft Zira',
-      'Microsoft Hazel', 'Microsoft Susan', 'Microsoft Catherine',
+      'Microsoft Zira', 'Microsoft Hazel', 'Microsoft Susan', 'Microsoft Catherine',
+      'Google UK English Female', 'Google US English',
       'Female', 'woman', 'Martha', 'Elena', 'Helena'];
-    // 男声常见名字关键词
+    // 男声常见名字关键词（本地发音人优先）
     var maleNames = ['Alex', 'Daniel', 'Oliver', 'Arthur', 'Tom', 'David',
       'Mark', 'George', 'James', 'Microsoft David', 'Microsoft Mark',
       'Microsoft George', 'Microsoft Ravi', 'Google UK English Male',
@@ -80,11 +80,30 @@
       }
     }
     // 3) 退而求其次：只要口音对（不挑性别）
-    var fallback = voicesCache.find(function (v) { return v.lang === lang; })
-                 || voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; })
-                 || voicesCache.find(function (v) { return v.lang === 'en-US'; })   // 英式找不到时用美式
-                 || voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; })
-                 || null;
+    //    注意：Google UK English 是在线发音人，国内网络可能无法播放
+    //    所以英式找不到本地发音人时，优先降级到美式本地发音人
+    var fallback = voicesCache.find(function (v) { return v.lang === lang; });
+    // 如果fallback是Google在线发音人，检查是否有本地替代
+    if (fallback && fallback.name && fallback.name.indexOf('Google') >= 0) {
+      // 尝试找同口音的本地(Microsoft/Apple)发音人
+      var localAlt = voicesCache.find(function (v) {
+        return v.lang === lang && v.name.indexOf('Google') < 0;
+      });
+      if (localAlt) fallback = localAlt;
+    }
+    if (!fallback) fallback = voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; });
+    // 英式完全没有可用发音人时，降级到美式本地发音人（保证有声音）
+    if (!fallback || (fallback.name && fallback.name.indexOf('Google') >= 0 && accent === 'GB')) {
+      var usLocal = voicesCache.find(function (v) {
+        return v.lang === 'en-US' && v.name.indexOf('Google') < 0 && v.name.indexOf(gender === 'male' ? 'David' : 'Zira') >= 0;
+      }) || voicesCache.find(function (v) { return v.lang === 'en-US' && v.name.indexOf('Google') < 0; });
+      if (usLocal) {
+        console.warn('[Speak]', accent, '无可用本地发音人，降级到美式:', usLocal.name);
+        fallback = usLocal;
+      }
+    }
+    if (!fallback) fallback = voicesCache.find(function (v) { return v.lang === 'en-US'; })
+                 || voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; });
     if (fallback) {
       console.log('[Speak] 选中:', fallback.name, fallback.lang);
     } else {
