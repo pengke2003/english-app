@@ -32,7 +32,15 @@
    * @param {string} gender  'female'(女) 或 'male'(男)
    */
   function pickVoice(accent, gender) {
+    // 确保发音人已加载（Chrome电脑版getVoices可能返回空）
+    if (synth) {
+      var freshVoices = synth.getVoices();
+      if (freshVoices && freshVoices.length > 0) {
+        voicesCache = freshVoices;
+      }
+    }
     if (!voicesCache.length) loadVoices();
+    console.log('[Speak] 可用发音人数:', voicesCache.length, '| 请求口音:', accent, '性别:', gender);
     var lang = accent === 'GB' ? 'en-GB' : 'en-US';
     var langPrefix = accent === 'GB' ? 'en-GB' : 'en-US';
 
@@ -68,7 +76,13 @@
     var fallback = voicesCache.find(function (v) { return v.lang === lang; })
                  || voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; })
                  || voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; })
+                 || voicesCache[0]  // 终极兜底：用第一个发音人（保证有声音）
                  || null;
+    if (fallback) {
+      console.log('[Speak] 选中:', fallback.name, fallback.lang);
+    } else {
+      console.warn('[Speak] 无任何可用发音人!');
+    }
     return fallback;
   }
 
