@@ -128,7 +128,13 @@
     var w = state.wmList[state.wmIndex];
     $('word-en').textContent = w.en;
     $('word-phonetic').textContent = w.phonetic || '';
-    $('word-meaning').textContent = w.cn;
+    // 释义：多词性分行显示（用；分隔的各部分换行）
+    var cn = w.cn || '';
+    var cnHtml = cn.split('；').filter(function (s) { return s.trim(); })
+      .map(function (s) { return '<div class="meaning-line">' + s.trim() + '</div>'; })
+      .join('');
+    $('word-meaning').innerHTML = cnHtml;
+    // 词性标签（可能多词性如 n./v.）
     $('word-pos').textContent = w.pos || '';
     $('word-example').textContent = w.example || '';
     $('word-progress').textContent = (state.wmIndex + 1) + ' / ' + state.wmList.length;
