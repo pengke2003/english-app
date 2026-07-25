@@ -129,11 +129,12 @@
     opts = opts || {};
     stop();
     var u = new SpeechSynthesisUtterance(word);
-    u.lang = opts.accent === 'GB' ? 'en-GB' : 'en-US';
     var voice = pickVoice(opts.accent || 'US', opts.gender || 'female');
+    // lang 跟随选中的 voice（降级时 voice 是 en-US，lang 也要 en-US，否则 Chrome 静音）
+    u.lang = voice ? voice.lang : (opts.accent === 'GB' ? 'en-GB' : 'en-US');
     if (voice) u.voice = voice;
     u.rate = opts.rate || 0.9;
-    u.pitch = opts.gender === 'male' ? 0.9 : 1.05;  // 男声略低沉，女声略明亮
+    u.pitch = opts.gender === 'male' ? 0.9 : 1.05;
     if (opts.onEnd) u.onend = opts.onEnd;
     currentUtter = u;
     synth.speak(u);
@@ -152,8 +153,9 @@
     var words = sentence.replace(/[.,!?;:"']/g, ' ').split(/\s+/).filter(Boolean);
 
     var u = new SpeechSynthesisUtterance(sentence);
-    u.lang = opts.accent === 'GB' ? 'en-GB' : 'en-US';
     var voice = pickVoice(opts.accent || 'US', opts.gender || 'female');
+    // lang 跟随选中的 voice（降级时保持一致，否则 Chrome 静音）
+    u.lang = voice ? voice.lang : (opts.accent === 'GB' ? 'en-GB' : 'en-US');
     if (voice) u.voice = voice;
     u.rate = opts.rate || 0.85;
     u.pitch = opts.gender === 'male' ? 0.9 : 1.05;
