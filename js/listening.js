@@ -204,5 +204,10 @@ const LISTENING = [
 ];
 
 if (typeof window !== 'undefined') {
-  window.LISTENING = LISTENING;
+  // 合并扩充题库
+  var ALL_LISTENING = LISTENING.slice();
+  if (window.LISTENING_EXTRA) {
+    ALL_LISTENING = ALL_LISTENING.concat(window.LISTENING_EXTRA);
+  }
+  window.LISTENING = ALL_LISTENING;
 }
