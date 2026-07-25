@@ -945,10 +945,22 @@
     for (var i = 0; i < sib.length; i++) sib[i].classList.remove('active');
     btn.classList.add('active');
     var tip = $('accent-tip');
+
+    // 检测本机是否有该口音的发音人
+    var hasAccentVoice = true;
+    if (window.speechSynthesis && accent === 'GB') {
+      var voices = window.speechSynthesis.getVoices() || [];
+      hasAccentVoice = voices.some(function (v) { return v.lang === 'en-GB' || v.lang.indexOf('en-GB') === 0; });
+    }
+
     if (tip) {
-      tip.textContent = accent === 'US'
-        ? '已选美式发音 🇺🇸：对话女声(A) + 男声(B)，问题用男声播报'
-        : '已选英式发音 🇬🇧：对话女声(A) + 男声(B)，问题用男声播报';
+      if (accent === 'US') {
+        tip.textContent = '已选美式发音 🇺🇸：对话女声(A) + 男声(B)，问题用男声播报';
+      } else {
+        tip.textContent = hasAccentVoice
+          ? '已选英式发音 🇬🇧：对话女声(A) + 男声(B)，问题用男声播报'
+          : '⚠️ 本机未安装英式发音人，将用美式发音代替（声音相同，词汇仍按英式表达）';
+      }
     }
     // 试听一句所选口音
     if (window.Speak) {

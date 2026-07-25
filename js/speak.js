@@ -64,12 +64,15 @@
         if (v.lang.indexOf(langPrefix) === 0 && v.name.indexOf(nameList[i]) >= 0) return v;
       }
     }
-    // 3) 退而求其次：只要口音对（不挑性别）
-    var fallback = voicesCache.find(function (v) { return v.lang === lang; })
-                 || voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; })
-                 || voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; })
-                 || null;
-    return fallback;
+    // 3) 只要口音对（不挑性别）
+    var exactLang = voicesCache.find(function (v) { return v.lang === lang; });
+    if (exactLang) return exactLang;
+    var prefixLang = voicesCache.find(function (v) { return v.lang.indexOf(langPrefix) === 0; });
+    if (prefixLang) return prefixLang;
+    // 4) 兜底：没有指定口音的voice，用任意英语voice（保证有声音）
+    var anyEn = voicesCache.find(function (v) { return v.lang.indexOf('en') === 0; });
+    console.warn('[Speak] 无', lang, '发音人，降级使用', anyEn ? anyEn.lang : '无', '-', anyEn ? anyEn.name : '');
+    return anyEn || null;
   }
 
   /** 停止所有朗读 */
@@ -91,7 +94,10 @@
     var u = new SpeechSynthesisUtterance(word);
     u.lang = opts.accent === 'GB' ? 'en-GB' : 'en-US';
     var voice = pickVoice(opts.accent || 'US', opts.gender || 'female');
-    if (voice) u.voice = voice;
+    if (voice) {
+      u.voice = voice;
+      u.lang = voice.lang;  // 关键：用实际voice的语言，避免lang与voice不匹配导致静音
+    }
     u.rate = opts.rate || 0.9;
     u.pitch = opts.gender === 'male' ? 0.9 : 1.05;  // 男声略低沉，女声略明亮
     if (opts.onEnd) u.onend = opts.onEnd;
@@ -114,7 +120,10 @@
     var u = new SpeechSynthesisUtterance(sentence);
     u.lang = opts.accent === 'GB' ? 'en-GB' : 'en-US';
     var voice = pickVoice(opts.accent || 'US', opts.gender || 'female');
-    if (voice) u.voice = voice;
+    if (voice) {
+      u.voice = voice;
+      u.lang = voice.lang;  // 关键：用实际voice的语言
+    }
     u.rate = opts.rate || 0.85;
     u.pitch = opts.gender === 'male' ? 0.9 : 1.05;
 
