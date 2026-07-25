@@ -855,6 +855,47 @@
     localStorage.setItem(LISTENING_KEY, JSON.stringify(list));
   }
 
+  // ===== 已做题/错题记录（用于去重和错题重考）=====
+  var DONE_KEY = 'english_listening_done';
+  var WRONG_KEY = 'english_listening_wrong';
+
+  function loadDoneIds() {
+    try { return JSON.parse(localStorage.getItem(DONE_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveDoneIds(ids) {
+    // 最多保留最近2000条记录，防止无限增长
+    if (ids.length > 2000) ids = ids.slice(-2000);
+    localStorage.setItem(DONE_KEY, JSON.stringify(ids));
+  }
+  function loadWrongIds() {
+    try { return JSON.parse(localStorage.getItem(WRONG_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveWrongIds(ids) {
+    if (ids.length > 500) ids = ids.slice(-500);
+    localStorage.setItem(WRONG_KEY, JSON.stringify(ids));
+  }
+  /** 记录本次测验的做题情况 */
+  function recordListeningProgress(details) {
+    var done = loadDoneIds();
+    var wrong = loadWrongIds();
+    var doneSet = new Set(done);
+    details.forEach(function (d) {
+      if (!doneSet.has(d.id)) { done.push(d.id); doneSet.add(d.id); }
+      if (!d.ok) {
+        // 错题加入错题集（去重）
+        if (wrong.indexOf(d.id) < 0) wrong.push(d.id);
+      } else {
+        // 答对了就从错题集移除
+        var idx = wrong.indexOf(d.id);
+        if (idx >= 0) wrong.splice(idx, 1);
+      }
+    });
+    saveDoneIds(done);
+    saveWrongIds(wrong);
+  }
+
   /**
    * 能力分析：基于历史记录，统计每个维度的正确率
    * 维度：grade(7/8/9) × type(A/B/C/D) × level(1/2/3)
@@ -893,40 +934,79 @@
    * 策略：短板维度权重高（60%），优势维度权重低（40%）
    */
   function adaptiveSelect(scope, ability) {
+    var doneIds = loadDoneIds();
+    var wrongIds = loadWrongIds();
+    var doneSet = new Set(doneIds);
+    var wrongSet = new Set(wrongIds);
+
     var pool = LISTENING.filter(function (q) {
       if (scope !== 'all' && q.grade !== parseInt(scope)) return false;
       return true;
     });
     if (pool.length === 0) return [];
 
-    // 计算每道题的权重
+    // 将题目分为：错题重考 / 未做过的新题 / 已做对的题（最后才用）
+    var wrongPool = pool.filter(function (q) { return wrongSet.has(q.id); });
+    var newPool = pool.filter(function (q) { return !doneSet.has(q.id) && !wrongSet.has(q.id); });
+    var reviewPool = pool.filter(function (q) { return doneSet.has(q.id) && !wrongSet.has(q.id); });
+
+    console.log('[听力出题] 总池:', pool.length, '| 错题:', wrongPool.length, '| 新题:', newPool.length, '| 已做对:', reviewPool.length);
+
+    // 计算每道题的权重（保留自适应逻辑）
     function weightOf(q) {
       var gradeRate = ability['grade:' + q.grade] !== undefined ? ability['grade:' + q.grade] : 0.5;
       var typeRate = ability['type:' + q.type] !== undefined ? ability['type:' + q.type] : 0.5;
       var levelRate = ability['level:' + q.level] !== undefined ? ability['level:' + q.level] : 0.5;
-      // 短板 = 正确率低 → 权重高；公式：权重 = 0.6 × (1 - 正确率) + 0.4 × 0.5
       var w = 0.6 * ((1 - gradeRate) + (1 - typeRate) + (1 - levelRate)) / 3 + 0.4 * 0.5;
       return w;
     }
 
-    // 按题型分组，确保每个题型都有题
-    var groups = { A: [], B: [], C: [], D: [] };
-    pool.forEach(function (q) {
-      groups[q.type].push({ q: q, w: weightOf(q) });
-    });
-
-    // 目标本卷结构：A=5, B=10, C=5, D=5 (共25题，但受限于题库容量)
+    // 目标本卷结构：A=5, B=10, C=5, D=5
     var targets = { A: 5, B: 10, C: 5, D: 5 };
     var result = [];
-    ['A', 'B', 'C', 'D'].forEach(function (type) {
-      var g = groups[type].slice().sort(function (a, b) {
-        // 按权重降序，加入随机扰动避免每次完全一样
-        return (b.w + Math.random() * 0.3) - (a.w + Math.random() * 0.3);
+    var usedIds = new Set();  // 本次已选的题（防重复）
+
+    // 出题优先级：错题重考 → 新题 → 已做对的题（复习）
+    function pickFrom(sourcePool, type, count) {
+      var candidates = sourcePool.filter(function (q) {
+        return q.type === type && !usedIds.has(q.id);
       });
-      var n = Math.min(targets[type], g.length);
-      for (var i = 0; i < n; i++) result.push(g[i].q);
+      // 按权重降序 + 随机扰动
+      candidates.sort(function (a, b) {
+        return (weightOf(b) + Math.random() * 0.3) - (weightOf(a) + Math.random() * 0.3);
+      });
+      var picked = [];
+      for (var i = 0; i < Math.min(count, candidates.length); i++) {
+        picked.push(candidates[i]);
+        usedIds.add(candidates[i].id);
+      }
+      return picked;
+    }
+
+    ['A', 'B', 'C', 'D'].forEach(function (type) {
+      var need = targets[type];
+      // 第1优先：错题重考（最多占该题型的50%）
+      var wrongQuota = Math.ceil(need * 0.5);
+      var fromWrong = pickFrom(wrongPool, type, wrongQuota);
+      result = result.concat(fromWrong);
+      var remaining = need - fromWrong.length;
+
+      // 第2优先：新题（没做过的）
+      if (remaining > 0) {
+        var fromNew = pickFrom(newPool, type, remaining);
+        result = result.concat(fromNew);
+        remaining -= fromNew.length;
+      }
+
+      // 第3优先：如果新题不够，用已做对的题补充（复习）
+      if (remaining > 0) {
+        var fromReview = pickFrom(reviewPool, type, remaining);
+        result = result.concat(fromReview);
+      }
     });
 
+    // 打乱题目顺序
+    result.sort(function () { return Math.random() - 0.5; });
     return result;
   }
 
@@ -1228,12 +1308,21 @@
       details: details
     };
     saveListeningRecord(record);
+    // 记录已做题和错题（用于下次去重和错题重考）
+    recordListeningProgress(details);
+
+    // 统计新题/错题重考数量
+    var wrongIds = loadWrongIds();
+    var doneBefore = loadDoneIds();
+    var wrongCount = details.filter(function (d) { return !d.ok; }).length;
+    var newCount = details.filter(function (d) { return doneBefore.indexOf(d.id) < 0; }).length;
 
     // 渲染结果
-    renderListeningResult(record, scoreByPart);
+    renderListeningResult(record, scoreByPart, { newCount: newCount, wrongCount: wrongCount });
   }
 
-  function renderListeningResult(rec, scoreByPart) {
+  function renderListeningResult(rec, scoreByPart, stats) {
+    stats = stats || {};
     var emoji = rec.score >= 90 ? '🏆' : rec.score >= 75 ? '🎉' : rec.score >= 60 ? '👍' : '💪';
     // 各部分正确率
     var partHtml = '';
@@ -1283,6 +1372,7 @@
         '<div class="score-board">' +
           '<div class="score-total">' + rec.score + '<span> / 100</span></div>' +
           '<div class="score-row"><span>答对题数</span><span>' + rec.details.filter(function(d){return d.ok}).length + ' / ' + rec.totalQ + '</span></div>' +
+          (stats.newCount !== undefined ? '<div class="score-row"><span>🆕 新题 / 🔁 错题重考</span><span>' + stats.newCount + ' / ' + (rec.totalQ - stats.newCount) + '</span></div>' : '') +
         '</div>' +
         '<h4 class="detail-title">📊 各部分正确率</h4>' +
         '<div class="part-stats">' + partHtml + '</div>' +
