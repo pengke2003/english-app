@@ -25,6 +25,7 @@
     currentPage: 'home',
     // 单词记忆
     wmGrade: 'all',
+    wmSort: 'zk',
     wmList: [],
     wmIndex: 0,
     // 单词挑战
@@ -138,29 +139,62 @@
     saveWcStats(stats);
   }
 
-  function getWordsByGrade(grade) {
+  function getWordsByGrade(grade, sort) {
+    sort = sort || state.wmSort || 'zk';
     var list = grade === 'all' ? ALL_WORDS.slice()
              : ALL_WORDS.filter(function (w) { return w.grade === parseInt(grade); });
-    // 中考词优先排序
-    return list.sort(function (a, b) {
-      var aZk = zkSet.has(a.en.toLowerCase()) ? 0 : 1;
-      var bZk = zkSet.has(b.en.toLowerCase()) ? 0 : 1;
-      if (aZk !== bZk) return aZk - bZk;
-      return Math.random() - 0.5;  // 同类内随机
-    });
+    if (sort === 'az') {
+      // 字母顺序 A-Z
+      list.sort(function (a, b) { return a.en.toLowerCase().localeCompare(b.en.toLowerCase()); });
+    } else if (sort === 'random') {
+      // 随机
+      list = shuffle(list);
+    } else {
+      // 中考优先（默认）
+      list.sort(function (a, b) {
+        var aZk = zkSet.has(a.en.toLowerCase()) ? 0 : 1;
+        var bZk = zkSet.has(b.en.toLowerCase()) ? 0 : 1;
+        if (aZk !== bZk) return aZk - bZk;
+        return Math.random() - 0.5;
+      });
+    }
+    return list;
   }
 
-  window.selectWordGrade = function (grade) {
+  // 更新年级Tab词数
+  function updateWmCounts() {
+    var set = function (id, val) { var el = $(id); if (el) el.textContent = val; };
+    set('wm-count-all', ALL_WORDS.length);
+    set('wm-count-7', ALL_WORDS.filter(function (w) { return w.grade === 7; }).length);
+    set('wm-count-8', ALL_WORDS.filter(function (w) { return w.grade === 8; }).length);
+    set('wm-count-9', ALL_WORDS.filter(function (w) { return w.grade === 9; }).length);
+  }
+
+  window.setWordSort = function (sort, evt) {
+    state.wmSort = sort;
+    // 更新排序按钮高亮
+    var btns = document.querySelectorAll('#word-memorize-page .sort-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    if (evt && evt.target) evt.target.classList.add('active');
+    // 重新排序当前列表
+    state.wmIndex = 0;
+    state.wmList = getWordsByGrade(state.wmGrade, sort);
+    renderWordCard();
+  };
+
+  window.selectWordGrade = function (grade, evt) {
     state.wmGrade = grade;
     var tabs = document.querySelectorAll('#word-memorize-page .grade-tab');
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-    event.target.classList.add('active');
+    var e = evt || window.event;
+    if (e && e.target) e.target.closest('.grade-tab').classList.add('active');
     state.wmIndex = 0;
     state.wmList = getWordsByGrade(grade);
     renderWordCard();
   };
 
   function initWordMemorize() {
+    updateWmCounts();
     if (state.wmList.length === 0) {
       state.wmList = getWordsByGrade(state.wmGrade);
     }
@@ -179,7 +213,17 @@
       .join('');
     $('word-meaning').innerHTML = cnHtml;
     $('word-pos').textContent = w.pos || '';
-    $('word-example').textContent = w.example || '';
+    // 多例句显示（从WORD_EXAMPLES获取，或用默认例句）
+    var examples = getWordExamples(w.en);
+    var exHtml = examples.map(function(ex, i) {
+      return '<div class="example-item">' +
+        '<button class="example-play-btn" onclick="playOneExample(' + i + ',\'' + w.en.replace(/'/g, "\\'") + '\')">🔊</button>' +
+        '<div class="example-text"><div class="ex-en">' + ex[0] + '</div>' +
+        '<div class="ex-cn">' + ex[1] + '</div></div></div>';
+    }).join('');
+    $('word-example').innerHTML = exHtml || '<div class="example-item"><div class="ex-en">' + (w.example || '') + '</div></div>';
+    // 存当前例句供播报用
+    state.wmExamples = examples;
     // 记忆次数计数+显示
     var memCount = incMemCount(w.en);
     var isZk = zkSet.has(w.en.toLowerCase());
@@ -189,6 +233,38 @@
     autoPlayWord(w);
   }
 
+  /** 获取单词的多条例句 */
+  function getWordExamples(en) {
+    if (window.WORD_EXAMPLES && WORD_EXAMPLES[en.toLowerCase()]) {
+      return WORD_EXAMPLES[en.toLowerCase()];
+    }
+    return [];
+  }
+
+  /** 播放单条例句 */
+  window.playOneExample = function (idx, en) {
+    if (!window.Speak) return;
+    var examples = state.wmExamples || [];
+    if (idx >= examples.length) return;
+    var ex = examples[idx];
+    var el = $('word-example');
+    var words = ex[0].split(/\s+/);
+    window.Speak.sentence(ex[0], function (i) {
+      if (i < 0) { return; }
+      // 高亮当前单词
+      var items = el.querySelectorAll('.example-item');
+      if (items[idx]) {
+        var enDiv = items[idx].querySelector('.ex-en');
+        if (enDiv && i >= 0) {
+          var html = words.map(function(wd, wi) {
+            return wi === i ? '<span class="hl-word">' + wd + '</span>' : wd;
+          }).join(' ');
+          enDiv.innerHTML = html;
+        }
+      }
+    }, { accent: 'US', gender: 'female', rate: 0.82 });
+  };
+
   /**
    * 自动播报：单词中速播报3次，再播报例句1次
    */
@@ -196,13 +272,20 @@
     if (!window.Speak || !window.Speak.sequence) return;
     var indicator = $('auto-play-indicator');
     if (indicator) indicator.classList.add('playing');
-    window.Speak.sequence([
-      { text: w.en, type: 'word', repeat: 3, gap: 300 },
-      { text: w.example || '', type: 'sentence', repeat: 1, gap: 500 }
-    ], {
+    // 获取多条例句
+    var examples = state.wmExamples || [];
+    // 构建播报序列：单词×3 → 逐条例句
+    var seq = [{ text: w.en, type: 'word', repeat: 3, gap: 300 }];
+    examples.forEach(function (ex) {
+      seq.push({ text: ex[0], type: 'sentence', repeat: 1, gap: 500 });
+    });
+    if (examples.length === 0 && w.example) {
+      seq.push({ text: w.example, type: 'sentence', repeat: 1, gap: 500 });
+    }
+    window.Speak.sequence(seq, {
       accent: 'US', gender: 'female',
-      wordRate: 0.95,       // 单词中速
-      sentenceRate: 0.82,   // 例句稍慢
+      wordRate: 0.95,
+      sentenceRate: 0.82,
       onProgress: function (cur, total) {
         if (indicator) {
           var dots = indicator.querySelectorAll('.play-dot');
@@ -212,13 +295,7 @@
         }
       },
       onWord: function (idx) {
-        // 例句朗读时高亮单词
-        if (idx < 0) { $('word-example').textContent = w.example; return; }
-        var words = (w.example || '').split(/\s+/);
-        var html = words.map(function (wd, i) {
-          return i === idx ? '<span class="hl-word">' + wd + '</span>' : wd;
-        }).join(' ');
-        $('word-example').innerHTML = html;
+        // 例句朗读时的高亮（简化处理，不逐句高亮）
       },
       onAllEnd: function () {
         if (indicator) indicator.classList.remove('playing');

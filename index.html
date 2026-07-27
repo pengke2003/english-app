@@ -48,7 +48,7 @@
           </div>
           <div class="login-error" id="login-error"></div>
           <button class="login-btn" id="login-submit" onclick="handleLogin()">登 录</button>
-          <p class="login-version">v4.3</p>
+          <p class="login-version">v4.4</p>
         </div>
       </div>
     </div>
@@ -133,10 +133,16 @@
         <button class="back-btn" onclick="showPage('home')"></button>
         <h2>单词记忆</h2>
         <div class="grade-tabs">
-          <button class="grade-tab active" data-grade="all" onclick="selectWordGrade('all')">全部</button>
-          <button class="grade-tab" data-grade="7" onclick="selectWordGrade('7')">七年级</button>
-          <button class="grade-tab" data-grade="8" onclick="selectWordGrade('8')">八年级</button>
-          <button class="grade-tab" data-grade="9" onclick="selectWordGrade('9')">九年级</button>
+          <button class="grade-tab active" data-grade="all" onclick="selectWordGrade('all', event)">全部 <span id="wm-count-all" class="scope-count">0</span></button>
+          <button class="grade-tab" data-grade="7" onclick="selectWordGrade('7', event)">七年级 <span id="wm-count-7" class="scope-count">0</span></button>
+          <button class="grade-tab" data-grade="8" onclick="selectWordGrade('8', event)">八年级 <span id="wm-count-8" class="scope-count">0</span></button>
+          <button class="grade-tab" data-grade="9" onclick="selectWordGrade('9', event)">九年级 <span id="wm-count-9" class="scope-count">0</span></button>
+        </div>
+        <div class="sort-bar">
+          <span class="sort-label">排序：</span>
+          <button class="sort-btn active" id="sort-zk" onclick="setWordSort('zk', event)">中考优先</button>
+          <button class="sort-btn" id="sort-az" onclick="setWordSort('az', event)">A-Z</button>
+          <button class="sort-btn" id="sort-random" onclick="setWordSort('random', event)">随机</button>
         </div>
       </header>
       <div class="card-container">
@@ -151,7 +157,7 @@
             <span class="word-meaning" id="word-meaning"></span>
           </div>
           <div class="wcm-example">
-            <div class="example-label">💬 例句</div>
+            <div class="example-label">💬 例句（点击🔊逐句播放）</div>
             <div class="word-example" id="word-example"></div>
           </div>
         </div>
@@ -371,6 +377,7 @@
 
   <script src="js/words.js"></script>
   <script src="js/zk-words.js"></script>
+  <script src="js/examples-extra.js"></script>
   <script src="js/grammar.js"></script>
   <script src="js/dialogues.js"></script>
   <script src="js/listening-extra.js"></script>

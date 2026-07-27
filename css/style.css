@@ -641,3 +641,18 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 /* 年级范围题数标签 */
 .scope-count { font-size: 11px; background: rgba(102,126,234,.2); color: #667eea; padding: 1px 8px; border-radius: 10px; margin-left: 4px; font-weight: 600; }
 .config-btn.active .scope-count { background: rgba(255,255,255,.25); color: #fff; }
+
+/* 排序栏 */
+.sort-bar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; }
+.sort-label { font-size: 13px; color: #718096; }
+.sort-btn { padding: 6px 14px; border-radius: 16px; background: #edf2f7; color: #4a5568; font-size: 12px; font-weight: 500; }
+.sort-btn.active { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+
+/* 多例句显示 */
+.wcm-example .example-item { display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; }
+.wcm-example .example-item:last-child { border-bottom: none; }
+.example-play-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #ebf4ff; font-size: 14px; }
+.example-play-btn:active { background: #c3dafe; }
+.example-text { flex: 1; }
+.ex-en { font-size: 14px; color: #2d3748; line-height: 1.5; }
+.ex-cn { font-size: 12px; color: #718096; margin-top: 2px; }
