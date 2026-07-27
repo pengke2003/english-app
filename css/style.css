@@ -637,3 +637,7 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 .stat-item:active { background: rgba(255,255,255,.3); }
 .stat-num { display: block; font-size: 22px; font-weight: 700; color: #fff; }
 .stat-label { display: block; font-size: 11px; color: rgba(255,255,255,.8); margin-top: 2px; }
+
+/* 年级范围题数标签 */
+.scope-count { font-size: 11px; background: rgba(102,126,234,.2); color: #667eea; padding: 1px 8px; border-radius: 10px; margin-left: 4px; font-weight: 600; }
+.config-btn.active .scope-count { background: rgba(255,255,255,.25); color: #fff; }

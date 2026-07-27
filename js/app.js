@@ -1601,6 +1601,16 @@
   function initListeningPage() {
     renderListeningHistory();
     renderAbilityRadar();
+    // 动态显示各年级题数
+    var all = LISTENING.length;
+    var g7 = LISTENING.filter(function (q) { return q.grade === 7; }).length;
+    var g8 = LISTENING.filter(function (q) { return q.grade === 8; }).length;
+    var g9 = LISTENING.filter(function (q) { return q.grade === 9; }).length;
+    var set = function (id, val) { var el = $(id); if (el) el.textContent = val; };
+    set('zk-count-all', all);
+    set('zk-count-7', g7);
+    set('zk-count-8', g8);
+    set('zk-count-9', g9);
   }
 
   // ============================================================
