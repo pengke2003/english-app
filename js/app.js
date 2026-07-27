@@ -101,9 +101,53 @@
   };
 
   // ============ 单词记忆 ============
+  // 中考词优先排序：中考核心词排前面，其他词排后面
+  var zkSet = new Set();
+  if (window.ZK_WORDS) ZK_WORDS.forEach(function (w) { zkSet.add(w.toLowerCase()); });
+
+  // 单词记忆次数计数（本地持久化）
+  var MEM_COUNT_KEY = 'english_mem_counts';
+  function loadMemCounts() {
+    try { return JSON.parse(localStorage.getItem(MEM_COUNT_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function saveMemCounts(counts) {
+    localStorage.setItem(MEM_COUNT_KEY, JSON.stringify(counts));
+  }
+  function incMemCount(en) {
+    var counts = loadMemCounts();
+    counts[en] = (counts[en] || 0) + 1;
+    saveMemCounts(counts);
+    return counts[en];
+  }
+
+  // 单词挑战统计（完成/正确/错误次数）
+  var WC_STATS_KEY = 'english_wc_stats';
+  function loadWcStats() {
+    try { return JSON.parse(localStorage.getItem(WC_STATS_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function saveWcStats(stats) {
+    localStorage.setItem(WC_STATS_KEY, JSON.stringify(stats));
+  }
+  function recordWcAnswer(en, correct) {
+    var stats = loadWcStats();
+    if (!stats[en]) stats[en] = { total: 0, correct: 0, wrong: 0 };
+    stats[en].total++;
+    if (correct) stats[en].correct++; else stats[en].wrong++;
+    saveWcStats(stats);
+  }
+
   function getWordsByGrade(grade) {
-    if (grade === 'all') return ALL_WORDS.slice();
-    return ALL_WORDS.filter(function (w) { return w.grade === parseInt(grade); });
+    var list = grade === 'all' ? ALL_WORDS.slice()
+             : ALL_WORDS.filter(function (w) { return w.grade === parseInt(grade); });
+    // 中考词优先排序
+    return list.sort(function (a, b) {
+      var aZk = zkSet.has(a.en.toLowerCase()) ? 0 : 1;
+      var bZk = zkSet.has(b.en.toLowerCase()) ? 0 : 1;
+      if (aZk !== bZk) return aZk - bZk;
+      return Math.random() - 0.5;  // 同类内随机
+    });
   }
 
   window.selectWordGrade = function (grade) {
@@ -112,13 +156,13 @@
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
     event.target.classList.add('active');
     state.wmIndex = 0;
-    state.wmList = shuffle(getWordsByGrade(grade));
+    state.wmList = getWordsByGrade(grade);
     renderWordCard();
   };
 
   function initWordMemorize() {
     if (state.wmList.length === 0) {
-      state.wmList = shuffle(getWordsByGrade(state.wmGrade));
+      state.wmList = getWordsByGrade(state.wmGrade);
     }
     renderWordCard();
   }
@@ -128,17 +172,20 @@
     var w = state.wmList[state.wmIndex];
     $('word-en').textContent = w.en;
     $('word-phonetic').textContent = w.phonetic || '';
-    // 释义：多词性分行显示（用；分隔的各部分换行）
+    // 释义：多词性分行显示
     var cn = w.cn || '';
     var cnHtml = cn.split('；').filter(function (s) { return s.trim(); })
       .map(function (s) { return '<div class="meaning-line">' + s.trim() + '</div>'; })
       .join('');
     $('word-meaning').innerHTML = cnHtml;
-    // 词性标签（可能多词性如 n./v.）
     $('word-pos').textContent = w.pos || '';
     $('word-example').textContent = w.example || '';
-    $('word-progress').textContent = (state.wmIndex + 1) + ' / ' + state.wmList.length;
-    // 自动播报：单词中速×3 + 例句×1
+    // 记忆次数计数+显示
+    var memCount = incMemCount(w.en);
+    var isZk = zkSet.has(w.en.toLowerCase());
+    $('word-progress').innerHTML = (state.wmIndex + 1) + ' / ' + state.wmList.length +
+      '<span class="mem-info">记忆' + memCount + '次' + (isZk ? ' ⭐中考' : '') + '</span>';
+    // 自动播报
     autoPlayWord(w);
   }
 
@@ -439,14 +486,19 @@
     }
     var w = state.wc.queue[state.wc.current];
     $('wc-question').textContent = w.cn;
-    // 音标 + 词性（音标在前，词性在后）
+    // 音标 + 词性
     $('wc-meaning').textContent = (w.phonetic || '') + (w.pos ? '  ' + w.pos : '');
     $('wc-input').value = '';
     $('wc-input').focus();
     var total = state.wc.queue.length;
+    // 显示该单词的历史统计（完成/正确/错误次数）
+    var stats = loadWcStats();
+    var st = stats[w.en] || { total: 0, correct: 0, wrong: 0 };
+    var isZk = zkSet.has(w.en.toLowerCase());
     $('wc-progress-fill').style.width = (state.wc.current / total * 100) + '%';
-    $('wc-progress-text').textContent = (state.wc.current + 1) + ' / ' + total +
-      ' （第' + state.wc.round + '轮 · 已对' + state.wc.correctCount + '）';
+    $('wc-progress-text').innerHTML = (state.wc.current + 1) + ' / ' + total +
+      ' （第' + state.wc.round + '轮 · 已对' + state.wc.correctCount + '）' +
+      '<span class="wc-word-stats">此词: 完成' + st.total + ' ✓' + st.correct + ' ✗' + st.wrong + (isZk ? ' ⭐' : '') + '</span>';
     // 新题自动播报3次单词读音
     autoPlayChallengeWord(w);
   }
@@ -467,15 +519,18 @@
     var input = $('wc-input').value.trim().toLowerCase();
     if (!input) { alert('请输入单词！'); return; }
     state.wc.totalAnswered++;
-    if (input === w.en.toLowerCase()) {
+    var correct = (input === w.en.toLowerCase());
+    if (correct) {
       state.wc.correctCount++;
-      if (window.Sfx) window.Sfx.correct();   // 答对：「叮」
+      if (window.Sfx) window.Sfx.correct();
       flashFeedback(true, '✓ 正确！' + w.en + ' = ' + w.cn);
     } else {
       state.wc.wrong.push(w);
-      if (window.Sfx) window.Sfx.wrong();     // 答错：「当」
+      if (window.Sfx) window.Sfx.wrong();
       flashFeedback(false, '✗ 正确答案：' + w.en + '（' + w.cn + '）');
     }
+    // 记录该单词的答题统计
+    recordWcAnswer(w.en, correct);
     state.wc.current++;
     setTimeout(renderWcQuestion, 900);
   };

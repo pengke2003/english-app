@@ -624,3 +624,9 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 
 
 
+
+/* 记忆次数标签 */
+.mem-info { display: block; font-size: 11px; color: #667eea; font-weight: 500; margin-top: 2px; }
+
+/* 单词挑战-单词统计 */
+.wc-word-stats { display: block; font-size: 11px; color: #718096; margin-top: 2px; }
