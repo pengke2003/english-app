@@ -221,7 +221,7 @@
         '<div class="example-text"><div class="ex-en">' + ex[0] + '</div>' +
         '<div class="ex-cn">' + ex[1] + '</div></div></div>';
     }).join('');
-    $('word-example').innerHTML = exHtml || '<div class="example-item"><div class="ex-en">' + (w.example || '') + '</div></div>';
+    $('word-example').innerHTML = exHtml || '<div class="example-item"><div class="ex-en" style="color:#a0aec0;font-style:italic">暂无例句，请通过释义学习</div></div>';
     // 存当前例句供播报用
     state.wmExamples = examples;
     // 记忆次数计数+显示
