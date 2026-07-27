@@ -48,7 +48,7 @@
           </div>
           <div class="login-error" id="login-error"></div>
           <button class="login-btn" id="login-submit" onclick="handleLogin()">登 录</button>
-          <p class="login-version">v4.6</p>
+          <p class="login-version">v4.6.1</p>
         </div>
       </div>
     </div>
@@ -336,10 +336,10 @@
         <div class="config-section">
           <label>选择年级范围：</label>
           <div class="btn-group">
-            <button class="config-btn active" onclick="selectListeningScope(this, 'all')">全部范围 <span id="zk-count-all" class="scope-count">820</span></button>
-            <button class="config-btn" onclick="selectListeningScope(this, '7')">七年级 <span id="zk-count-7" class="scope-count">261</span></button>
-            <button class="config-btn" onclick="selectListeningScope(this, '8')">八年级 <span id="zk-count-8" class="scope-count">202</span></button>
-            <button class="config-btn" onclick="selectListeningScope(this, '9')">九年级 <span id="zk-count-9" class="scope-count">167</span></button>
+            <button class="config-btn active" data-grade="all" onclick="selectListeningScope(this, 'all')">全部范围 <span id="zk-count-all" class="scope-count">820</span></button>
+            <button class="config-btn" data-grade="7" onclick="selectListeningScope(this, '7')">七年级 <span id="zk-count-7" class="scope-count">261</span></button>
+            <button class="config-btn" data-grade="8" onclick="selectListeningScope(this, '8')">八年级 <span id="zk-count-8" class="scope-count">202</span></button>
+            <button class="config-btn" data-grade="9" onclick="selectListeningScope(this, '9')">九年级 <span id="zk-count-9" class="scope-count">167</span></button>
           </div>
         </div>
         <div class="config-section accent-section">

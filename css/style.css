@@ -639,8 +639,25 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 .stat-label { display: block; font-size: 11px; color: rgba(255,255,255,.8); margin-top: 2px; }
 
 /* 年级范围题数标签 */
-.scope-count { font-size: 11px; background: rgba(102,126,234,.2); color: #667eea; padding: 1px 8px; border-radius: 10px; margin-left: 4px; font-weight: 600; }
-.config-btn.active .scope-count { background: rgba(255,255,255,.25); color: #fff; }
+.scope-count {
+  font-size: 11px;
+  color: #fff;
+  background: #667eea;
+  padding: 1px 8px;
+  border-radius: 10px;
+  margin-left: 5px;
+  font-weight: 700;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+/* 每个年级用醒目差色徽章，确保在任何按钮背景下都清晰可见 */
+.grade-tab[data-grade="all"] .scope-count, .config-btn[data-grade="all"] .scope-count { background: #667eea; }   /* 全部-紫 */
+.grade-tab[data-grade="7"]   .scope-count, .config-btn[data-grade="7"]   .scope-count { background: #22c55e; }   /* 七年级-绿 */
+.grade-tab[data-grade="8"]   .scope-count, .config-btn[data-grade="8"]   .scope-count { background: #f59e0b; }   /* 八年级-橙 */
+.grade-tab[data-grade="9"]   .scope-count, .config-btn[data-grade="9"]   .scope-count { background: #ec4899; }   /* 九年级-粉 */
+.config-btn.active .scope-count { color: #fff; }
 
 /* 排序栏 */
 .sort-bar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; }
