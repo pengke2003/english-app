@@ -671,6 +671,11 @@
 
   function finishGc() {
     var total = state.gc.queue.length;
+    // 记录语法挑战次数
+    try {
+      var c = parseInt(localStorage.getItem('english_gc_count') || '0') + 1;
+      localStorage.setItem('english_gc_count', String(c));
+    } catch (e) {}
     var correct = state.gc.correctCount;
     var rate = Math.round(correct / total * 100);
     var emoji = rate >= 90 ? '🌟' : rate >= 60 ? '👍' : '💪';
@@ -1745,6 +1750,33 @@
       '</div>' +
       '<button class="logout-btn" onclick="handleLogout()">退出</button>';
     $('user-bar').innerHTML = html;
+    renderHomeStats();
+  }
+
+  /** 渲染首页学习统计 */
+  function renderHomeStats() {
+    var el = $('home-stats');
+    if (!el) return;
+    // 统计各模块使用次数
+    var wcStats = loadWcStats();           // 单词挑战: 统计有多少个不同的词被答过
+    var wcCount = Object.keys(wcStats).length;
+    // 语法挑战次数（从localStorage读）
+    var gcCount = 0;
+    try { gcCount = parseInt(localStorage.getItem('english_gc_count') || '0'); } catch (e) {}
+    // 真题测试次数
+    var examCount = loadScores().length;
+    // 听力测验次数
+    var listenCount = loadListeningRecords().length;
+    // 单词记忆次数（总翻看次数）
+    var memCounts = loadMemCounts();
+    var memTotal = 0;
+    for (var k in memCounts) memTotal += memCounts[k];
+
+    el.innerHTML =
+      '<div class="stat-item" onclick="showPage(\'word-challenge\')"><span class="stat-num">' + wcCount + '</span><span class="stat-label">单词挑战</span></div>' +
+      '<div class="stat-item" onclick="showPage(\'grammar-challenge\')"><span class="stat-num">' + gcCount + '</span><span class="stat-label">语法挑战</span></div>' +
+      '<div class="stat-item" onclick="showPage(\'exam-test\')"><span class="stat-num">' + examCount + '</span><span class="stat-label">真题测试</span></div>' +
+      '<div class="stat-item" onclick="showPage(\'listening-test\')"><span class="stat-num">' + listenCount + '</span><span class="stat-label">听力测验</span></div>';
   }
 
   /** 退出登录：先保存数据 */
