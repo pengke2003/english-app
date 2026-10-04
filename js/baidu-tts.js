@@ -116,6 +116,10 @@
     try { audio.pause(); } catch (e) {}
     audio.currentTime = 0;
     audio.playbackRate = step.pitchRate || 1;
+    // 关键: 关闭音调保持, 否则降速不变调, 男声降调无效
+    try { audio.preservesPitch = false; } catch (e) {}
+    try { audio.mozPreservesPitch = false; } catch (e) {}
+    try { audio.webkitPreservesPitch = false; } catch (e) {}
     currentAudio = audio;
 
     var failed = false;

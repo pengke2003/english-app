@@ -74,8 +74,10 @@
   }
 
   var currentHighlightFn = null;
+  var playSession = 0;   // 播放会话令牌: stop后递增, 使旧的setTimeout播放链全部失效
 
   function sysStop() {
+    playSession++;
     if (synth && synth.speaking) synth.cancel();
     if (currentHighlightFn) { try { currentHighlightFn(-1); } catch (e) {} currentHighlightFn = null; }
   }
@@ -201,8 +203,8 @@
         return {
           text: s.text,
           spd: rateToSpd(rate),
-          // 对话男声段: 降调模拟 (仅对dialog类型生效, 且最后一段切分片才恢复语速间隙)
-          pitchRate: (s.type === 'dialog' && s.gender === 'male') ? 0.85 : 1,
+          // 对话男声段: 关闭preservesPitch后0.8倍速=明显降调, 模拟男声
+          pitchRate: (s.type === 'dialog' && s.gender === 'male') ? 0.8 : 1,
           gap: s.gap
         };
       });
@@ -227,8 +229,10 @@
 
     // ---- 系统引擎序列 ----
     function sysPlaySteps(sysSteps, o) {
+      var session = playSession;   // 锁定会话, stop()后 session 过期, 旧链静默终止
       var i = 0;
       function playNext() {
+        if (session !== playSession) return;   // 已被新播放/停止取代
         if (i >= sysSteps.length) { if (o.onAllEnd) o.onAllEnd(); return; }
         var step = sysSteps[i];
         if (o.onProgress) o.onProgress(i + 1, sysSteps.length);

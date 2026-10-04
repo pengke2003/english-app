@@ -150,12 +150,14 @@
       // 随机
       list = shuffle(list);
     } else {
-      // 中考优先（默认）
+      // 中考优先（默认）：中考词在前，组内按字母序
+      // 必须稳定排序（不可用Math.random），否则每次进入列表顺序不同，
+      // wmIndex 指向的词漂移，"上一个/下一个"前后错乱
       list.sort(function (a, b) {
         var aZk = zkSet.has(a.en.toLowerCase()) ? 0 : 1;
         var bZk = zkSet.has(b.en.toLowerCase()) ? 0 : 1;
         if (aZk !== bZk) return aZk - bZk;
-        return Math.random() - 0.5;
+        return a.en.toLowerCase().localeCompare(b.en.toLowerCase());
       });
     }
     return list;
@@ -203,6 +205,9 @@
 
   function renderWordCard() {
     if (state.wmList.length === 0) return;
+    // 边界钳制：防止越界后取到 undefined 导致卡片渲染中断
+    if (state.wmIndex < 0) state.wmIndex = 0;
+    if (state.wmIndex > state.wmList.length - 1) state.wmIndex = state.wmList.length - 1;
     var w = state.wmList[state.wmIndex];
     $('word-en').textContent = w.en;
     $('word-phonetic').textContent = w.phonetic || '';
@@ -332,7 +337,16 @@
   window.nextWord = function () {
     if (window.Speak) window.Speak.stop();
     if (state.wmIndex < state.wmList.length - 1) { state.wmIndex++; renderWordCard(); }
-    else { state.wmList = state.wmList.concat(shuffle(getWordsByGrade(state.wmGrade))); state.wmIndex++; renderWordCard(); }
+    else {
+      // 到达末尾：追加"未出现过的词"(去重)，避免列表无限膨胀与重复词错乱
+      var existing = {};
+      state.wmList.forEach(function (w) { existing[w.en.toLowerCase()] = 1; });
+      var more = getWordsByGrade(state.wmGrade).filter(function (w) { return !existing[w.en.toLowerCase()]; });
+      if (more.length === 0) more = getWordsByGrade(state.wmGrade);  // 全部学完则再来一轮
+      state.wmList = state.wmList.concat(more);
+      state.wmIndex++;
+      renderWordCard();
+    }
   };
 
   // ============ 语法记忆 ============
