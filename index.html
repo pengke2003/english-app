@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- same-origin: 跨域请求(百度TTS)不带Referer, 避免其防盗链拦截 -->
+  <meta name="referrer" content="same-origin">
   <meta name="theme-color" content="#667eea">
   <meta name="description" content="初中英语单词、语法、听力、真题一体化学习工具，支持离线使用">
   <title>初中英语辅导</title>
@@ -48,7 +50,7 @@
           </div>
           <div class="login-error" id="login-error"></div>
           <button class="login-btn" id="login-submit" onclick="handleLogin()">登 录</button>
-          <p class="login-version">v4.6.1</p>
+          <p class="login-version">v4.7</p>
         </div>
       </div>
     </div>
@@ -382,6 +384,7 @@
   <script src="js/dialogues.js"></script>
   <script src="js/listening-extra.js"></script>
   <script src="js/listening.js"></script>
+  <script src="js/baidu-tts.js"></script>
   <script src="js/speak.js"></script>
   <script src="js/sfx.js"></script>
   <script src="js/auth.js"></script>
