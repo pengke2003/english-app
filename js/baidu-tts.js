@@ -15,6 +15,26 @@
   var PROBE_TIMEOUT = 4000;  // 探测超时
   var SESSION_KEY = 'baidu_tts_ok';
   var MAX_CACHE = 60;
+  // 极短静音WAV: 在用户手势同步链内播放一次即可解锁页面媒体栈
+  var SILENT_WAV = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
+  var mediaUnlocked = false;
+
+  /** 手势内静音解锁: 移动端浏览器(华为等)要求媒体激活后异步play()才放行 */
+  function unlock() {
+    if (mediaUnlocked) return;
+    try {
+      var a = new Audio(SILENT_WAV);
+      var p = a.play();
+      if (p && p.then) p.then(function () { mediaUnlocked = true; }).catch(function () {});
+      else mediaUnlocked = true;
+    } catch (e) {}
+  }
+
+  // 页面级常驻: 用户第一次触摸/点击即在手势链内完成解锁(零业务侵入)
+  document.addEventListener('touchend', unlock, { passive: true });
+  document.addEventListener('mousedown', unlock, { passive: true });
+  document.addEventListener('keydown', unlock);
 
   // 会话级状态: null=未探测 true=可用 false=不可用
   var status = null;
@@ -151,7 +171,31 @@
     audio.onended = onEnded;
     audio.onerror = onError;
     var p = audio.play();
-    if (p && p.catch) p.catch(function () { onError(); });
+    if (p && p.catch) p.catch(function (err) {
+      // 自动播放策略拦截(手势外play): 挂起等待用户下次触摸自动续播, 不回落系统TTS
+      if (err && err.name === 'NotAllowedError') { waitGestureResume(steps, i, total, opts); return; }
+      onError();
+    });
+  }
+
+  /** 播放被自动播放策略拒绝: 等下一次触摸/点击自动从当前段续播 */
+  function waitGestureResume(steps, idx, total, opts) {
+    stopped = true;
+    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+    var resumed = false;
+    var resume = function () {
+      if (resumed) return;
+      resumed = true;
+      document.removeEventListener('touchend', resume);
+      document.removeEventListener('mousedown', resume);
+      stopped = false;
+      playFrom(steps, idx, total, opts);
+    };
+    // 延迟绑定, 避免当前这次手势的touchend立刻误触发
+    setTimeout(function () {
+      document.addEventListener('touchend', resume);
+      document.addEventListener('mousedown', resume);
+    }, 400);
   }
 
   /** 会话级可用性(speak.js 快速判断, 未探测时视为不可用走系统TTS) */

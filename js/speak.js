@@ -356,6 +356,7 @@
     speaking: isSpeaking,
     supported: !!(synth || window.BaiduTTS),
     voicesInfo: getVoicesInfo,
-    pickVoice: pickVoice
+    pickVoice: pickVoice,
+    unlock: function () { if (window.BaiduTTS && window.BaiduTTS.unlock) window.BaiduTTS.unlock(); }
   };
 })();
